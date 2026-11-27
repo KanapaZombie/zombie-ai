@@ -1,0 +1,1221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scan4Safety PL/EU — Civil Defense & Community Hazard Scanner</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter & JetBrains Mono -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <!-- Font Awesome for Tactical/Safety Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        tactical: {
+                            950: '#090d16',
+                            900: '#0f172a',
+                            800: '#1e293b',
+                            700: '#334155',
+                        },
+                        euBlue: '#003399',
+                        euGold: '#FFCC00',
+                        pspRed: '#DC2626',
+                        rcbAmber: '#F59E0B',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom subtle grid background for civil defense command aesthetic */
+        .bg-tactical-grid {
+            background-size: 24px 24px;
+            background-image: 
+                linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+        }
+        /* Scanner beam animation */
+        @keyframes scanLine {
+            0% { top: 0%; opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { top: 100%; opacity: 0; }
+        }
+        .animate-scan {
+            animation: scanLine 2.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+    </style>
+</head>
+<body class="bg-tactical-950 text-slate-100 font-sans antialiased min-h-screen flex flex-col bg-tactical-grid selection:bg-amber-500 selection:text-slate-950">
+
+    <!-- Top Emergency & Protocol Banner -->
+    <div class="bg-gradient-to-r from-euBlue via-slate-900 to-red-900/80 border-b border-slate-800 px-4 py-1.5 text-xs">
+        <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
+            <div class="flex items-center gap-2 font-mono text-slate-200">
+                <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span id="top-status-text">EU CIVIL PROTECTION & PL STATE SAFETY PROTOCOLS ACTIVE</span>
+            </div>
+            <div class="flex items-center gap-4 font-mono font-semibold">
+                <span class="text-amber-300"><i class="fa-solid fa-phone-volume mr-1"></i> <span data-i18n="emergencyNumbers">ALARM: 112 | PSP: 998 | POLICJA: 997</span></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Navigation Header -->
+    <header class="sticky top-0 z-40 bg-tactical-900/90 backdrop-blur-md border-b border-slate-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <!-- Brand Identity -->
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-red-600 flex items-center justify-center shadow-lg shadow-red-950/50 border border-amber-400/30">
+                    <i class="fa-solid fa-shield-halved text-white text-lg"></i>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <h1 class="font-extrabold text-lg sm:text-xl tracking-tight text-white">Scan4Safety <span class="text-amber-400">PL/EU</span></h1>
+                        <span class="hidden sm:inline-block px-2 py-0.5 text-[10px] font-mono uppercase tracking-wider bg-slate-800 text-slate-300 rounded-md border border-slate-700">v2.5 AI-Guard</span>
+                    </div>
+                    <p class="text-[11px] text-slate-400 hidden sm:block" data-i18n="subtitle">Civil Defense, Fire Service (PSP) & Community Hazard Audit</p>
+                </div>
+            </div>
+
+            <!-- Right Controls: Language Switcher & Quick Info -->
+            <div class="flex items-center gap-2 sm:gap-3">
+                <button onclick="toggleEmergencyModal()" class="px-3 py-2 rounded-lg bg-red-600/20 hover:bg-red-600/30 text-red-400 border border-red-500/30 text-xs font-semibold transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                    <span class="hidden md:inline" data-i18n="alertGuideBtn">RCB / Sirens Guide</span>
+                </button>
+
+                <!-- Language Toggle Switch (EN / PL) -->
+                <div class="flex items-center bg-tactical-950 p-1 rounded-xl border border-slate-800" role="group" aria-label="Language Switcher">
+                    <button id="lang-en" onclick="setLanguage('en')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all bg-amber-500 text-slate-950 shadow">
+                        🇬🇧 EN
+                    </button>
+                    <button id="lang-pl" onclick="setLanguage('pl')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all text-slate-400 hover:text-white">
+                        🇵🇱 PL
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Toast Notification Banner (Replaces alert()) -->
+    <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none px-4 sm:px-0"></div>
+
+    <!-- Main Workspace -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            
+            <!-- LEFT COLUMN: Image Capture, Protocol Selection & Controls (5 cols on lg) -->
+            <div class="lg:col-span-5 flex flex-col gap-5">
+                
+                <!-- Step 1: Inspection Protocol Mode -->
+                <div class="bg-tactical-900 border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xl">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-xs font-mono uppercase tracking-wider text-amber-400 font-semibold">
+                            <i class="fa-solid fa-sliders mr-1.5"></i><span data-i18n="step1Title">1. Select Inspection Framework</span>
+                        </span>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-2.5" id="protocol-selector">
+                        <button type="button" onclick="selectProtocol('civil_defense')" data-protocol="civil_defense" class="protocol-btn active text-left p-3 rounded-xl border border-amber-500 bg-amber-500/10 transition flex flex-col gap-1">
+                            <div class="flex items-center justify-between">
+                                <i class="fa-solid fa-person-shelter text-amber-400"></i>
+                                <span class="text-[10px] font-mono text-amber-300">EU / RCB</span>
+                            </div>
+                            <span class="text-xs font-bold text-white" data-i18n="protoCivilTitle">Civil Defense & Shelter</span>
+                            <span class="text-[10px] text-slate-400 line-clamp-1" data-i18n="protoCivilDesc">Basements, structural safety, refuge</span>
+                        </button>
+
+                        <button type="button" onclick="selectProtocol('fire_evac')" data-protocol="fire_evac" class="protocol-btn text-left p-3 rounded-xl border border-slate-800 bg-tactical-950/60 hover:border-slate-700 transition flex flex-col gap-1">
+                            <div class="flex items-center justify-between">
+                                <i class="fa-solid fa-fire-extinguisher text-red-400"></i>
+                                <span class="text-[10px] font-mono text-slate-400">PSP / DZ.U.</span>
+                            </div>
+                            <span class="text-xs font-bold text-slate-200" data-i18n="protoFireTitle">Fire & Evacuation</span>
+                            <span class="text-[10px] text-slate-400 line-clamp-1" data-i18n="protoFireDesc">Exits, hydrants, electrical hazards</span>
+                        </button>
+
+                        <button type="button" onclick="selectProtocol('public_infra')" data-protocol="public_infra" class="protocol-btn text-left p-3 rounded-xl border border-slate-800 bg-tactical-950/60 hover:border-slate-700 transition flex flex-col gap-1">
+                            <div class="flex items-center justify-between">
+                                <i class="fa-solid fa-road-barrier text-blue-400"></i>
+                                <span class="text-[10px] font-mono text-slate-400">EU-CPM</span>
+                            </div>
+                            <span class="text-xs font-bold text-slate-200" data-i18n="protoInfraTitle">Community & Urban</span>
+                            <span class="text-[10px] text-slate-400 line-clamp-1" data-i18n="protoInfraDesc">Flooding, fallen lines, public space</span>
+                        </button>
+
+                        <button type="button" onclick="selectProtocol('cbrn_hazmat')" data-protocol="cbrn_hazmat" class="protocol-btn text-left p-3 rounded-xl border border-slate-800 bg-tactical-950/60 hover:border-slate-700 transition flex flex-col gap-1">
+                            <div class="flex items-center justify-between">
+                                <i class="fa-solid fa-biohazard text-emerald-400"></i>
+                                <span class="text-[10px] font-mono text-slate-400">CBRN / GIOŚ</span>
+                            </div>
+                            <span class="text-xs font-bold text-slate-200" data-i18n="protoCbrnTitle">HazMat & Environmental</span>
+                            <span class="text-[10px] text-slate-400 line-clamp-1" data-i18n="protoCbrnDesc">Spills, gas cylinders, suspicious items</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Step 2: Visual Evidence Capture / Upload -->
+                <div class="bg-tactical-900 border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xl">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-xs font-mono uppercase tracking-wider text-amber-400 font-semibold">
+                            <i class="fa-solid fa-camera mr-1.5"></i><span data-i18n="step2Title">2. Capture or Upload Visual Evidence</span>
+                        </span>
+                        <button id="clear-image-btn" onclick="resetImage()" class="hidden text-xs text-slate-400 hover:text-red-400 transition">
+                            <i class="fa-solid fa-trash-can mr-1"></i><span data-i18n="clearBtn">Clear</span>
+                        </button>
+                    </div>
+
+                    <!-- Dropzone / Preview Box -->
+                    <div id="dropzone" class="relative w-full aspect-[4/3] rounded-xl border-2 border-dashed border-slate-700 bg-tactical-950/80 overflow-hidden flex flex-col items-center justify-center transition-all hover:border-amber-500/60 group">
+                        
+                        <!-- Empty State Prompt -->
+                        <div id="upload-placeholder" class="text-center p-6 flex flex-col items-center">
+                            <div class="w-14 h-14 rounded-2xl bg-slate-800/80 border border-slate-700 flex items-center justify-center mb-3 group-hover:scale-105 transition">
+                                <i class="fa-solid fa-cloud-arrow-up text-2xl text-amber-400"></i>
+                            </div>
+                            <p class="text-sm font-semibold text-slate-200 mb-1" data-i18n="dropTitle">Tap to take a photo or upload image</p>
+                            <p class="text-xs text-slate-400 max-w-xs" data-i18n="dropSubtitle">Supports JPG, PNG, WEBP. Ensure hazards, exits, signage, or structural elements are clearly visible.</p>
+                        </div>
+
+                        <!-- Live Camera Video Stream -->
+                        <video id="camera-stream" class="hidden w-full h-full object-cover" autoplay playsinline></video>
+
+                        <!-- Image Preview -->
+                        <img id="image-preview" class="hidden w-full h-full object-contain bg-black" alt="Uploaded scene for safety inspection" />
+
+                        <!-- Scanning Laser Overlay (Visible during AI Analysis) -->
+                        <div id="scan-overlay" class="hidden absolute inset-0 bg-slate-950/60 backdrop-blur-[2px] flex flex-col items-center justify-center z-20">
+                            <div class="absolute left-0 right-0 h-1 bg-gradient-to-r from-transparent via-amber-400 to-transparent shadow-[0_0_15px_#fbbf24] animate-scan"></div>
+                            <div class="bg-tactical-900/90 border border-amber-500/40 px-4 py-3 rounded-xl text-center shadow-2xl">
+                                <i class="fa-solid fa-radar fa-spin text-amber-400 text-xl mb-1.5"></i>
+                                <p class="text-xs font-mono font-bold text-white uppercase tracking-wider" data-i18n="scanningText">Analyzing Against EU & PL Protocols...</p>
+                                <p class="text-[11px] text-slate-400 mt-0.5" data-i18n="scanningSubtext">Cross-referencing PSP, RCB & EU Civil Defense directives</p>
+                            </div>
+                        </div>
+
+                        <!-- Hidden File Inputs -->
+                        <input type="file" id="file-input" accept="image/*" class="hidden" onchange="handleFileSelect(event)">
+                        <input type="file" id="camera-input" accept="image/*" capture="environment" class="hidden" onchange="handleFileSelect(event)">
+                    </div>
+
+                    <!-- Action Buttons for Image Acquisition -->
+                    <div id="capture-controls" class="grid grid-cols-2 gap-2.5 mt-3">
+                        <button type="button" onclick="triggerCamera()" class="py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold border border-slate-700 transition flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-camera text-amber-400"></i>
+                            <span data-i18n="takePhotoBtn">Take Photo</span>
+                        </button>
+                        <button type="button" onclick="document.getElementById('file-input').click()" class="py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold border border-slate-700 transition flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-folder-open text-blue-400"></i>
+                            <span data-i18n="uploadFileBtn">Upload Image</span>
+                        </button>
+                    </div>
+
+                    <!-- Live Webcam Snap Controls (Shown only if desktop webcam active) -->
+                    <div id="webcam-controls" class="hidden grid grid-cols-2 gap-2.5 mt-3">
+                        <button type="button" onclick="snapWebcamPhoto()" class="py-2.5 px-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold transition flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-circle-dot"></i>
+                            <span data-i18n="snapBtn">Capture Frame</span>
+                        </button>
+                        <button type="button" onclick="stopWebcam()" class="py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold border border-slate-700 transition flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-xmark"></i>
+                            <span data-i18n="cancelCamBtn">Cancel Camera</span>
+                        </button>
+                    </div>
+
+                    <!-- Optional Context Input -->
+                    <div class="mt-4">
+                        <label for="context-notes" class="block text-xs font-medium text-slate-300 mb-1.5" data-i18n="contextLabel">
+                            Location / Context Notes (Optional)
+                        </label>
+                        <textarea id="context-notes" rows="2" class="w-full rounded-xl bg-tactical-950 border border-slate-800 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 text-xs text-slate-200 p-2.5 placeholder-slate-500 transition" data-i18n-placeholder="contextPlaceholder" placeholder="e.g., Apartment block basement in Gdańsk, public school corridor, blocked fire route..."></textarea>
+                    </div>
+
+                    <!-- Run Diagnostic Button -->
+                    <button id="analyze-btn" type="button" onclick="runSafetyAudit()" disabled class="mt-4 w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 disabled:from-slate-800 disabled:to-slate-800 disabled:text-slate-500 disabled:cursor-not-allowed text-slate-950 font-extrabold text-sm shadow-lg shadow-amber-950/30 transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-shield-virus"></i>
+                        <span data-i18n="runAuditBtn">RUN SAFETY & CIVIL DEFENSE AUDIT</span>
+                    </button>
+                </div>
+
+                <!-- Sample Scenarios Quick-Load (Helpful for immediate testing) -->
+                <div class="bg-tactical-900/60 border border-slate-800/80 rounded-2xl p-4">
+                    <p class="text-[11px] font-mono uppercase text-slate-400 mb-2.5" data-i18n="demoTitle">Quick Test: Generate Synthetic Hazard Scene</p>
+                    <div class="flex flex-wrap gap-2">
+                        <button type="button" onclick="loadSyntheticScenario('blocked_exit')" class="text-xs px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition">
+                            🚪 <span data-i18n="demoExit">Blocked Fire Exit</span>
+                        </button>
+                        <button type="button" onclick="loadSyntheticScenario('shelter_basement')" class="text-xs px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition">
+                            🏚️ <span data-i18n="demoBasement">Basement Shelter Check</span>
+                        </button>
+                        <button type="button" onclick="loadSyntheticScenario('electrical_flood')" class="text-xs px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition">
+                            ⚡ <span data-i18n="demoFlood">Flooded Electrical Box</span>
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- RIGHT COLUMN: Detailed Civil Defense & Fire Service Audit Report (7 cols on lg) -->
+            <div class="lg:col-span-7 flex flex-col gap-5">
+                
+                <!-- Empty / Standby State -->
+                <div id="report-standby" class="bg-tactical-900 border border-slate-800 rounded-2xl p-8 sm:p-12 text-center shadow-xl flex flex-col items-center justify-center min-h-[480px]">
+                    <div class="w-16 h-16 rounded-2xl bg-slate-800/80 border border-slate-700 flex items-center justify-center mb-4 text-slate-400">
+                        <i class="fa-solid fa-file-shield text-3xl text-amber-500/80"></i>
+                    </div>
+                    <h2 class="text-lg font-bold text-white mb-2" data-i18n="standbyTitle">Awaiting Visual Evidence for Assessment</h2>
+                    <p class="text-sm text-slate-400 max-w-md mb-6" data-i18n="standbyDesc">
+                        Upload or photograph a location, corridor, basement shelter, electrical installation, or public hazard. Our AI engine evaluates threats against EU Civil Protection Directives and Polish Fire Service (PSP) & RCB standards.
+                    </p>
+                    
+                    <!-- Verified Standards Badges -->
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full max-w-lg text-left">
+                        <div class="p-3 rounded-xl bg-tactical-950 border border-slate-800">
+                            <div class="text-xs font-bold text-blue-400 mb-0.5">EU Civil Protection</div>
+                            <div class="text-[11px] text-slate-400">Decision 1313/2013/EU & Union Disaster Resilience Goals</div>
+                        </div>
+                        <div class="p-3 rounded-xl bg-tactical-950 border border-slate-800">
+                            <div class="text-xs font-bold text-red-400 mb-0.5">PSP / MSWiA (PL)</div>
+                            <div class="text-[11px] text-slate-400">Dz.U. Fire Protection Act, Evacuation & Shelter Guidelines</div>
+                        </div>
+                        <div class="p-3 rounded-xl bg-tactical-950 border border-slate-800">
+                            <div class="text-xs font-bold text-amber-400 mb-0.5">RCB / Alerting (PL)</div>
+                            <div class="text-[11px] text-slate-400">Rządowe Centrum Bezpieczeństwa Crisis & Civilian Manuals</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Active Report Container (Hidden until generated) -->
+                <div id="report-container" class="hidden flex flex-col gap-5">
+                    
+                    <!-- Top Summary & Risk Level Card -->
+                    <div class="bg-tactical-900 border border-slate-800 rounded-2xl p-5 sm:p-6 shadow-xl">
+                        <div class="flex flex-wrap items-start justify-between gap-4 pb-4 border-b border-slate-800">
+                            <div>
+                                <div class="flex items-center gap-2 mb-1">
+                                    <span id="report-timestamp" class="text-[11px] font-mono text-slate-400"></span>
+                                    <span class="text-slate-600">•</span>
+                                    <span id="report-protocol-badge" class="text-[11px] font-mono uppercase px-2 py-0.5 rounded bg-slate-800 text-amber-400"></span>
+                                </div>
+                                <h2 id="report-title" class="text-xl font-extrabold text-white"></h2>
+                            </div>
+
+                            <!-- Severity Badge -->
+                            <div id="risk-badge" class="px-4 py-2 rounded-xl border font-mono text-xs font-extrabold uppercase tracking-wider flex items-center gap-2 shadow-lg">
+                                <i id="risk-icon" class="fa-solid fa-circle-exclamation"></i>
+                                <span id="risk-label"></span>
+                            </div>
+                        </div>
+
+                        <!-- Executive Assessment -->
+                        <div class="mt-4">
+                            <h3 class="text-xs font-mono uppercase tracking-wider text-slate-400 mb-1.5" data-i18n="execSummaryTitle">Executive Threat & Readiness Summary</h3>
+                            <p id="report-summary" class="text-sm text-slate-200 leading-relaxed"></p>
+                        </div>
+
+                        <!-- Export & Action Toolbar -->
+                        <div class="mt-5 pt-4 border-t border-slate-800 flex flex-wrap items-center justify-between gap-2">
+                            <div class="flex flex-wrap gap-2">
+                                <button type="button" onclick="copyReportToClipboard()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-200 border border-slate-700 transition flex items-center gap-1.5">
+                                    <i class="fa-regular fa-copy"></i>
+                                    <span data-i18n="copyBtn">Copy Report</span>
+                                </button>
+                                <button type="button" onclick="downloadReportMarkdown()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-200 border border-slate-700 transition flex items-center gap-1.5">
+                                    <i class="fa-solid fa-download"></i>
+                                    <span data-i18n="exportBtn">Download (.TXT)</span>
+                                </button>
+                            </div>
+                            <span class="text-[11px] text-slate-500 font-mono" data-i18n="aiDisclaimer">AI Field Aid — Verify with local PSP/Authorities</span>
+                        </div>
+                    </div>
+
+                    <!-- Identified Hazards & Threats List -->
+                    <div class="bg-tactical-900 border border-slate-800 rounded-2xl p-5 sm:p-6 shadow-xl">
+                        <h3 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2 mb-4">
+                            <i class="fa-solid fa-magnifying-glass-chart text-red-400"></i>
+                            <span data-i18n="hazardsSectionTitle">Detected Hazards & Regulatory Violations</span>
+                        </h3>
+                        <div id="hazards-list" class="flex flex-col gap-3"></div>
+                    </div>
+
+                    <!-- Immediate Civilian & Community Action Plan -->
+                    <div class="bg-tactical-900 border border-slate-800 rounded-2xl p-5 sm:p-6 shadow-xl">
+                        <h3 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2 mb-4">
+                            <i class="fa-solid fa-list-check text-emerald-400"></i>
+                            <span data-i18n="actionsSectionTitle">Recommended Mitigation & Civil Defense Steps</span>
+                        </h3>
+                        <div id="actions-list" class="flex flex-col gap-2.5"></div>
+                    </div>
+
+                    <!-- Legal Directives, Polish State (PSP/RCB) & EU Civil Protection Citations -->
+                    <div class="bg-tactical-900 border border-slate-800 rounded-2xl p-5 sm:p-6 shadow-xl">
+                        <h3 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2 mb-3">
+                            <i class="fa-solid fa-book-bookmark text-blue-400"></i>
+                            <span data-i18n="protocolsSectionTitle">Applicable EU Directives, Polish Law & Official Sources</span>
+                        </h3>
+                        <div id="protocols-list" class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4"></div>
+                        
+                        <!-- Grounded Web Sources (If returned by Gemini Search Grounding) -->
+                        <div id="grounding-sources-wrapper" class="hidden pt-3 border-t border-slate-800">
+                            <p class="text-[11px] font-mono uppercase text-slate-400 mb-2" data-i18n="verifiedLinksTitle">Verified Official Reference Links:</p>
+                            <div id="grounding-sources-list" class="flex flex-wrap gap-2"></div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer with Official Polish & EU Civil Defense Portals -->
+    <footer class="bg-tactical-900 border-t border-slate-800 mt-12 py-6 px-4 text-xs text-slate-400">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+            <div>
+                <p class="font-semibold text-slate-300">Scan4Safety PL/EU — Community Civil Protection & Hazard Intelligence</p>
+                <p class="text-[11px] text-slate-500 mt-0.5" data-i18n="footerDisclaimer">Informational support tool. In immediate life-threatening emergencies, always call 112 or 998 immediately.</p>
+            </div>
+            <div class="flex flex-wrap items-center gap-4 text-[11px] font-mono">
+                <a href="https://www.gov.pl/web/rcb" target="_blank" rel="noopener noreferrer" class="hover:text-amber-400 transition">RCB.gov.pl</a>
+                <a href="https://www.gov.pl/web/kgpsp" target="_blank" rel="noopener noreferrer" class="hover:text-amber-400 transition">KG PSP (Straż Pożarna)</a>
+                <a href="https://www.gov.pl/web/obrona-cywilna" target="_blank" rel="noopener noreferrer" class="hover:text-amber-400 transition">Obrona Cywilna (GOV.PL)</a>
+                <a href="https://civil-protection-humanitarian-aid.ec.europa.eu/" target="_blank" rel="noopener noreferrer" class="hover:text-amber-400 transition">EU Civil Protection</a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Modal: Polish Acoustic Alarm Signals & RCB Alert Quick Reference -->
+    <div id="emergency-modal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-tactical-900 border border-slate-700 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 shadow-2xl">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+                <h3 class="text-lg font-extrabold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-tower-broadcast text-red-500"></i>
+                    <span data-i18n="modalTitle">Polish Civil Defense Signals & Emergency Numbers</span>
+                </h3>
+                <button onclick="toggleEmergencyModal()" class="text-slate-400 hover:text-white p-1">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            
+            <div class="mt-4 space-y-4 text-xs text-slate-300">
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    <div class="p-3 rounded-xl bg-red-950/50 border border-red-800/60 text-center">
+                        <div class="text-lg font-black text-red-400">112</div>
+                        <div class="font-semibold" data-i18n="num112">EU Emergency</div>
+                    </div>
+                    <div class="p-3 rounded-xl bg-slate-800 border border-slate-700 text-center">
+                        <div class="text-lg font-black text-amber-400">998</div>
+                        <div class="font-semibold" data-i18n="num998">Fire Service (PSP)</div>
+                    </div>
+                    <div class="p-3 rounded-xl bg-slate-800 border border-slate-700 text-center">
+                        <div class="text-lg font-black text-blue-400">997</div>
+                        <div class="font-semibold" data-i18n="num997">Police (Policja)</div>
+                    </div>
+                    <div class="p-3 rounded-xl bg-slate-800 border border-slate-700 text-center">
+                        <div class="text-lg font-black text-emerald-400">999</div>
+                        <div class="font-semibold" data-i18n="num999">Ambulance</div>
+                    </div>
+                </div>
+
+                <div class="p-4 rounded-xl bg-tactical-950 border border-slate-800 space-y-2">
+                    <h4 class="font-bold text-amber-400 uppercase font-mono" data-i18n="sirenAnnounce">Alarm Announcement (Ogłoszenie alarmu)</h4>
+                    <p data-i18n="sirenAnnounceDesc">Modulated siren sound lasting 3 minutes. Turn on local radio/TV, check Alert RCB SMS, close windows, move to a designated shelter or basement, and assist neighbors.</p>
+                </div>
+
+                <div class="p-4 rounded-xl bg-tactical-950 border border-slate-800 space-y-2">
+                    <h4 class="font-bold text-emerald-400 uppercase font-mono" data-i18n="sirenCancel">Alarm Cancellation (Odwołanie alarmu)</h4>
+                    <p data-i18n="sirenCancelDesc">Continuous, steady siren sound lasting 3 minutes. Follow official communiqués from municipal authorities (Urząd Gminy/Miasta) and PSP.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden Canvas for Synthetic Demo Images & Webcam Capture -->
+    <canvas id="helper-canvas" class="hidden"></canvas>
+
+    <script>
+        // =========================================================================
+        // 1. STATE MANAGEMENT & LOCALIZATION DICTIONARY (ENGLISH & POLISH)
+        // =========================================================================
+        const state = {
+            lang: 'en',
+            protocol: 'civil_defense',
+            imageBase64: null,
+            imageMimeType: 'image/jpeg',
+            webcamStream: null,
+            lastReport: null
+        };
+
+        const i18n = {
+            en: {
+                emergencyNumbers: "ALARM: 112 | PSP: 998 | POLICE: 997",
+                subtitle: "Civil Defense, Fire Service (PSP) & Community Hazard Audit",
+                alertGuideBtn: "RCB / Sirens Guide",
+                step1Title: "1. Select Inspection Framework",
+                protoCivilTitle: "Civil Defense & Shelter",
+                protoCivilDesc: "Basements, structural safety, refuge",
+                protoFireTitle: "Fire & Evacuation",
+                protoFireDesc: "Exits, hydrants, electrical hazards",
+                protoInfraTitle: "Community & Urban",
+                protoInfraDesc: "Flooding, fallen lines, public space",
+                protoCbrnTitle: "HazMat & Environmental",
+                protoCbrnDesc: "Spills, gas cylinders, suspicious items",
+                step2Title: "2. Capture or Upload Visual Evidence",
+                clearBtn: "Clear",
+                dropTitle: "Tap to take a photo or upload image",
+                dropSubtitle: "Supports JPG, PNG, WEBP. Ensure hazards, exits, signage, or structural elements are clearly visible.",
+                scanningText: "Analyzing Against EU & PL Protocols...",
+                scanningSubtext: "Cross-referencing PSP, RCB & EU Civil Defense directives",
+                takePhotoBtn: "Take Photo",
+                uploadFileBtn: "Upload Image",
+                snapBtn: "Capture Frame",
+                cancelCamBtn: "Cancel Camera",
+                contextLabel: "Location / Context Notes (Optional)",
+                contextPlaceholder: "e.g., Apartment block basement in Gdańsk, public school corridor, blocked fire route...",
+                runAuditBtn: "RUN SAFETY & CIVIL DEFENSE AUDIT",
+                demoTitle: "Quick Test: Generate Synthetic Hazard Scene",
+                demoExit: "Blocked Fire Exit",
+                demoBasement: "Basement Shelter Check",
+                demoFlood: "Flooded Electrical Box",
+                standbyTitle: "Awaiting Visual Evidence for Assessment",
+                standbyDesc: "Upload or photograph a location, corridor, basement shelter, electrical installation, or public hazard. Our AI engine evaluates threats against EU Civil Protection Directives and Polish Fire Service (PSP) & RCB standards.",
+                execSummaryTitle: "Executive Threat & Readiness Summary",
+                copyBtn: "Copy Report",
+                exportBtn: "Download (.TXT)",
+                aiDisclaimer: "AI Field Aid — Verify with local PSP/Authorities",
+                hazardsSectionTitle: "Detected Hazards & Regulatory Violations",
+                actionsSectionTitle: "Recommended Mitigation & Civil Defense Steps",
+                protocolsSectionTitle: "Applicable EU Directives, Polish Law & Official Sources",
+                verifiedLinksTitle: "Verified Official Reference Links:",
+                footerDisclaimer: "Informational support tool. In immediate life-threatening emergencies, always call 112 or 998 immediately.",
+                modalTitle: "Polish Civil Defense Signals & Emergency Numbers",
+                num112: "EU Emergency",
+                num998: "Fire Service (PSP)",
+                num997: "Police (Policja)",
+                num999: "Ambulance",
+                sirenAnnounce: "Alarm Announcement (Ogłoszenie alarmu)",
+                sirenAnnounceDesc: "Modulated siren sound lasting 3 minutes. Turn on local radio/TV, check Alert RCB SMS, close windows, move to a designated shelter or basement, and assist neighbors.",
+                sirenCancel: "Alarm Cancellation (Odwołanie alarmu)",
+                sirenCancelDesc: "Continuous, steady siren sound lasting 3 minutes. Follow official communiqués from municipal authorities (Urząd Gminy/Miasta) and PSP.",
+                toastCopied: "Safety report copied to clipboard.",
+                toastError: "Analysis failed. Please try again or check your connection.",
+                toastCamError: "Camera access unavailable; opening file selector instead."
+            },
+            pl: {
+                emergencyNumbers: "ALARM: 112 | PSP: 998 | POLICJA: 997",
+                subtitle: "Obrona Cywilna, Państwowa Straż Pożarna (PSP) i Audyt Zagrożeń",
+                alertGuideBtn: "Syreny / Alert RCB",
+                step1Title: "1. Wybierz Ramy Kontroli Bezpieczeństwa",
+                protoCivilTitle: "Obrona Cywilna i Schrony",
+                protoCivilDesc: "Piwnice, miejsca doraźnego schronienia",
+                protoFireTitle: "Pożar i Ewakuacja",
+                protoFireDesc: "Drogi ewakuacyjne, hydranty, instalacje",
+                protoInfraTitle: "Infrastruktura Lokalna",
+                protoInfraDesc: "Podtopienia, zerwane linie, przestrzeń",
+                protoCbrnTitle: "CBRN i Substancje Niebezpieczne",
+                protoCbrnDesc: "Wycieki, butle z gazem, podejrzane pakunki",
+                step2Title: "2. Zrób Zdjęcie lub Wgraj Materiał Wizualny",
+                clearBtn: "Wyczyść",
+                dropTitle: "Dotknij, aby zrobić zdjęcie lub wgrać plik",
+                dropSubtitle: "Obsługuje JPG, PNG, WEBP. Upewnij się, że zagrożenia, wyjścia, oznakowanie lub konstrukcja są wyraźnie widoczne.",
+                scanningText: "Analiza wg Protokołów UE i RP...",
+                scanningSubtext: "Weryfikacja z wytycznymi PSP, RCB oraz Obrony Cywilnej UE",
+                takePhotoBtn: "Zrób Zdjęcie",
+                uploadFileBtn: "Wgraj Plik",
+                snapBtn: "Zapisz Kadr",
+                cancelCamBtn: "Anuluj Kamerę",
+                contextLabel: "Lokalizacja / Dodatkowy Kontekst (Opcjonalnie)",
+                contextPlaceholder: "np. Piwnica bloku mieszkalnego, korytarz szkolny, zastawiona droga ewakuacyjna...",
+                runAuditBtn: "URUCHOM AUDYT BEZPIECZEŃSTWA I OC",
+                demoTitle: "Szybki Test: Wygeneruj Scenę Zagrożenia",
+                demoExit: "Zastawione Wyjście Ewakuacyjne",
+                demoBasement: "Kontrola Piwnicy / MDS",
+                demoFlood: "Zalana Rozdzielnia Elektryczna",
+                standbyTitle: "Oczekiwanie na Materiał Wizualny do Oceny",
+                standbyDesc: "Wgraj lub sfotografuj pomieszczenie, korytarz, miejsce schronienia, instalację elektryczną lub zagrożenie w otoczeniu. Silnik AI ocenia zagrożenia w oparciu o dyrektywy UE oraz wytyczne PSP, MSWiA i RCB.",
+                execSummaryTitle: "Podsumowanie Zagrożeń i Gotowości",
+                copyBtn: "Kopiuj Raport",
+                exportBtn: "Pobierz (.TXT)",
+                aiDisclaimer: "Wsparcie AI — Zweryfikuj z lokalną PSP/Służbami",
+                hazardsSectionTitle: "Wykryte Zagrożenia i Naruszenia Przepisów",
+                actionsSectionTitle: "Zalecane Działania Naprawcze i Obrony Cywilnej",
+                protocolsSectionTitle: "Obowiązujące Dyrektywy UE, Prawo RP i Źródła Państwowe",
+                verifiedLinksTitle: "Zweryfikowane Oficjalne Źródła:",
+                footerDisclaimer: "Narzędzie wsparcia informacyjnego. W sytuacji bezpośredniego zagrożenia życia zawsze dzwoń pod 112 lub 998.",
+                modalTitle: "Sygnały Alarmowe Obrony Cywilnej i Numery Alarmowe RP",
+                num112: "Numer Alarmowy UE",
+                num998: "Straż Pożarna (PSP)",
+                num997: "Policja",
+                num999: "Pogotowie Ratunkowe",
+                sirenAnnounce: "Ogłoszenie alarmu (Sygnał akustyczny)",
+                sirenAnnounceDesc: "Modulowany dźwięk syreny trwający 3 minuty. Włącz lokalne radio/TV, sprawdź komunikaty Alert RCB, zamknij okna, udaj się do miejsca schronienia (MDS) i pomóż sąsiadom.",
+                sirenCancel: "Odwołanie alarmu",
+                sirenCancelDesc: "Ciągły, jednostajny dźwięk syreny trwający 3 minuty. Stosuj się do komunikatów Urzędu Gminy/Miasta oraz Państwowej Straży Pożarnej.",
+                toastCopied: "Raport bezpieczeństwa skopiowany do schowka.",
+                toastError: "Błąd analizy. Spróbuj ponownie lub sprawdź połączenie.",
+                toastCamError: "Brak dostępu do kamery; otwieranie wyboru pliku."
+            }
+        };
+
+        // =========================================================================
+        // 2. LANGUAGE & UI CONTROLS
+        // =========================================================================
+        function setLanguage(lang) {
+            state.lang = lang;
+            document.documentElement.lang = lang;
+
+            // Update toggle buttons styling
+            const btnEn = document.getElementById('lang-en');
+            const btnPl = document.getElementById('lang-pl');
+            if (lang === 'en') {
+                btnEn.className = "px-3 py-1.5 rounded-lg text-xs font-bold transition-all bg-amber-500 text-slate-950 shadow";
+                btnPl.className = "px-3 py-1.5 rounded-lg text-xs font-bold transition-all text-slate-400 hover:text-white";
+            } else {
+                btnPl.className = "px-3 py-1.5 rounded-lg text-xs font-bold transition-all bg-amber-500 text-slate-950 shadow";
+                btnEn.className = "px-3 py-1.5 rounded-lg text-xs font-bold transition-all text-slate-400 hover:text-white";
+            }
+
+            // Translate all static data-i18n attributes
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (i18n[lang][key]) {
+                    el.textContent = i18n[lang][key];
+                }
+            });
+
+            // Translate placeholders
+            document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+                const key = el.getAttribute('data-i18n-placeholder');
+                if (i18n[lang][key]) {
+                    el.placeholder = i18n[lang][key];
+                }
+            });
+
+            // If an image is already loaded and user switches language, prompt or re-render if needed
+            if (state.lastReport && state.imageBase64) {
+                runSafetyAudit();
+            }
+        }
+
+        function selectProtocol(protocolId) {
+            state.protocol = protocolId;
+            document.querySelectorAll('.protocol-btn').forEach(btn => {
+                const isSelected = btn.getAttribute('data-protocol') === protocolId;
+                if (isSelected) {
+                    btn.className = "protocol-btn active text-left p-3 rounded-xl border border-amber-500 bg-amber-500/10 transition flex flex-col gap-1";
+                } else {
+                    btn.className = "protocol-btn text-left p-3 rounded-xl border border-slate-800 bg-tactical-950/60 hover:border-slate-700 transition flex flex-col gap-1";
+                }
+            });
+        }
+
+        function toggleEmergencyModal() {
+            const modal = document.getElementById('emergency-modal');
+            modal.classList.toggle('hidden');
+        }
+
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            const colors = type === 'error' 
+                ? 'bg-red-950/95 border-red-500/50 text-red-200' 
+                : 'bg-tactical-800/95 border-amber-500/50 text-slate-100';
+            
+            toast.className = `${colors} border px-4 py-3 rounded-xl shadow-2xl text-xs font-medium flex items-center gap-2.5 pointer-events-auto transition-all transform translate-y-0`;
+            toast.innerHTML = `<i class="fa-solid ${type === 'error' ? 'fa-circle-exclamation text-red-400' : 'fa-circle-info text-amber-400'}"></i><span>${message}</span>`;
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => toast.remove(), 300);
+            }, 3500);
+        }
+
+        // =========================================================================
+        // 3. IMAGE CAPTURE, UPLOAD & SYNTHETIC SCENARIO GENERATOR
+        // =========================================================================
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            stopWebcam();
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const dataUrl = e.target.result;
+                setLoadedImage(dataUrl, file.type || 'image/jpeg');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function setLoadedImage(dataUrl, mimeType) {
+            const base64Part = dataUrl.split(',')[1];
+            state.imageBase64 = base64Part;
+            state.imageMimeType = mimeType;
+
+            const preview = document.getElementById('image-preview');
+            preview.src = dataUrl;
+            preview.classList.remove('hidden');
+
+            document.getElementById('upload-placeholder').classList.add('hidden');
+            document.getElementById('camera-stream').classList.add('hidden');
+            document.getElementById('clear-image-btn').classList.remove('hidden');
+            document.getElementById('analyze-btn').disabled = false;
+        }
+
+        function resetImage() {
+            stopWebcam();
+            state.imageBase64 = null;
+            document.getElementById('image-preview').classList.add('hidden');
+            document.getElementById('image-preview').src = '';
+            document.getElementById('upload-placeholder').classList.remove('hidden');
+            document.getElementById('clear-image-btn').classList.add('hidden');
+            document.getElementById('analyze-btn').disabled = true;
+            document.getElementById('file-input').value = '';
+            document.getElementById('camera-input').value = '';
+        }
+
+        async function triggerCamera() {
+            // On mobile devices, native capture input works best; on desktop, try getUserMedia
+            const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+            if (isMobile) {
+                document.getElementById('camera-input').click();
+                return;
+            }
+
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: 'environment' } 
+                });
+                state.webcamStream = stream;
+                const video = document.getElementById('camera-stream');
+                video.srcObject = stream;
+                video.classList.remove('hidden');
+                
+                document.getElementById('upload-placeholder').classList.add('hidden');
+                document.getElementById('image-preview').classList.add('hidden');
+                document.getElementById('capture-controls').classList.add('hidden');
+                document.getElementById('webcam-controls').classList.remove('hidden');
+            } catch (err) {
+                showToast(i18n[state.lang].toastCamError, 'info');
+                document.getElementById('camera-input').click();
+            }
+        }
+
+        function snapWebcamPhoto() {
+            const video = document.getElementById('camera-stream');
+            const canvas = document.getElementById('helper-canvas');
+            canvas.width = video.videoWidth || 640;
+            canvas.height = video.videoHeight || 480;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+            stopWebcam();
+            setLoadedImage(dataUrl, 'image/jpeg');
+        }
+
+        function stopWebcam() {
+            if (state.webcamStream) {
+                state.webcamStream.getTracks().forEach(track => track.stop());
+                state.webcamStream = null;
+            }
+            document.getElementById('camera-stream').classList.add('hidden');
+            document.getElementById('webcam-controls').classList.add('hidden');
+            document.getElementById('capture-controls').classList.remove('hidden');
+            if (!state.imageBase64) {
+                document.getElementById('upload-placeholder').classList.remove('hidden');
+            }
+        }
+
+        // Drag and drop support
+        const dropzone = document.getElementById('dropzone');
+        dropzone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropzone.classList.add('border-amber-400', 'bg-slate-900');
+        });
+        dropzone.addEventListener('dragleave', () => {
+            dropzone.classList.remove('border-amber-400', 'bg-slate-900');
+        });
+        dropzone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropzone.classList.remove('border-amber-400', 'bg-slate-900');
+            if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                const file = e.dataTransfer.files[0];
+                if (file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = (ev) => setLoadedImage(ev.target.result, file.type);
+                    reader.readAsDataURL(file);
+                }
+            }
+        });
+
+        // Generate synthetic test scenes on canvas so users can test immediately without a photo
+        function loadSyntheticScenario(type) {
+            stopWebcam();
+            const canvas = document.getElementById('helper-canvas');
+            canvas.width = 800;
+            canvas.height = 600;
+            const ctx = canvas.getContext('2d');
+
+            if (type === 'blocked_exit') {
+                selectProtocol('fire_evac');
+                // Corridor background
+                ctx.fillStyle = '#334155';
+                ctx.fillRect(0, 0, 800, 600);
+                // Floor
+                ctx.fillStyle = '#1e293b';
+                ctx.fillRect(0, 440, 800, 160);
+                // Green EXIT Sign
+                ctx.fillStyle = '#15803d';
+                ctx.fillRect(320, 60, 160, 55);
+                ctx.fillStyle = '#ffffff';
+                ctx.font = 'bold 28px sans-serif';
+                ctx.fillText('WYJŚCIE EXIT', 332, 97);
+                // Fire Door
+                ctx.fillStyle = '#991b1b';
+                ctx.fillRect(310, 130, 180, 310);
+                // Obstacles blocking door (boxes & bicycle)
+                ctx.fillStyle = '#b45309';
+                ctx.fillRect(280, 320, 120, 120);
+                ctx.fillStyle = '#d97706';
+                ctx.fillRect(390, 290, 130, 150);
+                ctx.fillStyle = '#cbd5e1';
+                ctx.font = 'bold 18px monospace';
+                ctx.fillText('FLAMMABLE STORAGE / KARTONY', 275, 385);
+                document.getElementById('context-notes').value = state.lang === 'pl' 
+                    ? 'Korytarz ewakuacyjny w budynku wielorodzinnym, zastawione drzwi ewakuacyjne.' 
+                    : 'Residential apartment evacuation corridor with boxes blocking emergency exit door.';
+            } else if (type === 'shelter_basement') {
+                selectProtocol('civil_defense');
+                ctx.fillStyle = '#1e293b';
+                ctx.fillRect(0, 0, 800, 600);
+                // Concrete wall & crack
+                ctx.strokeStyle = '#0f172a';
+                ctx.lineWidth = 6;
+                ctx.beginPath();
+                ctx.moveTo(150, 80); ctx.lineTo(180, 210); ctx.lineTo(140, 350);
+                ctx.stroke();
+                // Overhead pipes
+                ctx.fillStyle = '#64748b';
+                ctx.fillRect(0, 50, 800, 25);
+                ctx.fillStyle = '#eab308';
+                ctx.fillRect(0, 85, 800, 15); // Yellow gas pipe
+                // Small basement window unsealed
+                ctx.fillStyle = '#93c5fd';
+                ctx.fillRect(520, 120, 180, 90);
+                ctx.fillStyle = '#ffffff';
+                ctx.font = 'bold 20px monospace';
+                ctx.fillText('PIWNICA / MDS - RURA GAZOWA + OKNO', 160, 520);
+                document.getElementById('context-notes').value = state.lang === 'pl'
+                    ? 'Piwnica rozważana jako Miejsce Doraźnego Schronienia (MDS) wg wytycznych PSP.'
+                    : 'Basement evaluated as Temporary Shelter Place (MDS) under PSP civil defense criteria.';
+            } else if (type === 'electrical_flood') {
+                selectProtocol('public_infra');
+                ctx.fillStyle = '#475569';
+                ctx.fillRect(0, 0, 800, 600);
+                // Water puddle on ground
+                ctx.fillStyle = '#0284c7';
+                ctx.fillRect(0, 420, 800, 180);
+                // Open electrical cabinet
+                ctx.fillStyle = '#cbd5e1';
+                ctx.fillRect(280, 160, 220, 270);
+                ctx.fillStyle = '#0f172a';
+                ctx.fillRect(300, 180, 180, 230);
+                // High voltage sign
+                ctx.fillStyle = '#facc15';
+                ctx.beginPath();
+                ctx.moveTo(390, 210); ctx.lineTo(430, 280); ctx.lineTo(350, 280); ctx.closePath();
+                ctx.fill();
+                ctx.fillStyle = '#ef4444';
+                ctx.font = 'bold 18px monospace';
+                ctx.fillText('ZALANA ROZDZIELNIA 400V / WODA', 235, 500);
+                document.getElementById('context-notes').value = state.lang === 'pl'
+                    ? 'Podtopiona piwnica/garaż podziemny z otwartą skrzynką elektryczną.'
+                    : 'Flooded underground garage with open low/medium voltage electrical switchgear.';
+            }
+
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+            setLoadedImage(dataUrl, 'image/jpeg');
+        }
+
+        // =========================================================================
+        // 4. GEMINI API INTEGRATION (MULTIMODAL VISION + SEARCH GROUNDING + JSON)
+        // =========================================================================
+        async function fetchWithRetry(url, options, maxRetries = 4) {
+            let delay = 1000;
+            for (let attempt = 0; attempt <= maxRetries; attempt++) {
+                try {
+                    const response = await fetch(url, options);
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}`);
+                    }
+                    return await response.json();
+                } catch (err) {
+                    if (attempt === maxRetries) throw err;
+                    await new Promise(res => setTimeout(res, delay));
+                    delay *= 2;
+                }
+            }
+        }
+
+        async function runSafetyAudit() {
+            if (!state.imageBase64) return;
+
+            const analyzeBtn = document.getElementById('analyze-btn');
+            const scanOverlay = document.getElementById('scan-overlay');
+            
+            analyzeBtn.disabled = true;
+            scanOverlay.classList.remove('hidden');
+
+            const userNotes = document.getElementById('context-notes').value.trim();
+            const targetLanguage = state.lang === 'pl' ? 'POLISH (Język Polski)' : 'ENGLISH';
+
+            const protocolDescriptions = {
+                civil_defense: 'EU Civil Protection Mechanism (Decision 1313/2013/EU), Polish Civil Protection & Civil Defense Act (Ustawa o ochronie ludności i obronie cywilnej), MSWiA/PSP Guidelines on Shelters and Places of Temporary Refuge (Miejsca Doraźnego Schronienia - MDS), and RCB (Rządowe Centrum Bezpieczeństwa) preparedness handbooks.',
+                fire_evac: 'Polish Fire Protection Act (Ustawa o ochronie przeciwpożarowej), MSWiA Regulation on Fire Protection of Buildings (Dz.U. 2010 nr 109 poz. 719), Państwowa Straż Pożarna (PSP) evacuation route clearance, fire extinguisher, hydrant, and smoke ventilation standards, plus EU fire safety directives.',
+                public_infra: 'EU Critical Entities Resilience Directive (CER - Directive (EU) 2022/2557), Polish Crisis Management Act (Ustawa o zarządzaniu kryzysowym), RCB public safety alerts, municipal flood/storm/electrical hazard protocols, and community infrastructure safety.',
+                cbrn_hazmat: 'EU CBRN Action Plan, Polish Environmental Protection & GIOŚ (Główny Inspektorat Ochrony Środowiska) standards, PSP Chemical & Ecological Rescue (Ratownictwo Chemiczno-Ekologiczne) protocols, ADR/CLP hazardous materials labeling, and RCB contamination procedures.'
+            };
+
+            const systemPrompt = `You are a senior European Union Civil Protection Officer and Polish State Fire Service (Państwowa Straż Pożarna - PSP) & Government Security Center (RCB) Safety Inspector.
+Your mission is to analyze the provided photograph for physical, structural, fire, environmental, CBRN, or civil defense hazards affecting civilians and local communities.
+
+CRITICAL INSTRUCTIONS:
+1. Respond ENTIRELY in ${targetLanguage}. Every field in the JSON output must be written naturally and accurately in ${targetLanguage}.
+2. Focus the inspection through the lens of: ${protocolDescriptions[state.protocol]}.
+3. Reference authentic, verified Polish state publications/laws (e.g., KG PSP guidelines, Wytyczne MDS, Rozporządzenie MSWiA ws. ochrony przeciwpożarowej, Poradniki RCB "Bądź gotowy!", Ustawa o ochronie ludności i obronie cywilnej) AND European Union Civil Protection protocols (e.g., EU Civil Protection Mechanism, Union Disaster Resilience Goals, Directive (EU) 2022/2557).
+4. Provide practical, life-saving, step-by-step guidance suitable for civilians, building administrators, or local community responders.
+5. Output STRICTLY valid JSON matching the requested schema.`;
+
+            const userQuery = `Inspect this image for safety hazards, threats, and civil defense readiness. 
+Selected Inspection Framework: ${state.protocol}.
+${userNotes ? `User Location/Context Notes: "${userNotes}"` : 'No additional location notes provided.'}
+Identify all visible hazards, assess overall risk level (CRITICAL, HIGH, MODERATE, or LOW), provide immediate protective actions for civilians, and cite specific EU Civil Protection and Polish state (PSP/RCB/MSWiA/GOV.PL) standards.`;
+
+            const apiKey = ""; // Provided automatically by runtime environment
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+
+            const payload = {
+                contents: [
+                    {
+                        role: "user",
+                        parts: [
+                            { text: userQuery },
+                            {
+                                inlineData: {
+                                    mimeType: state.imageMimeType,
+                                    data: state.imageBase64
+                                }
+                            }
+                        ]
+                    }
+                ],
+                systemInstruction: {
+                    parts: [{ text: systemPrompt }]
+                },
+                tools: [{ "google_search": {} }],
+                generationConfig: {
+                    responseMimeType: "application/json",
+                    responseSchema: {
+                        type: "OBJECT",
+                        properties: {
+                            reportTitle: { type: "STRING", description: "Concise title of the safety inspection report" },
+                            riskLevel: { type: "STRING", enum: ["CRITICAL", "HIGH", "MODERATE", "LOW"] },
+                            riskLabelLocalized: { type: "STRING", description: "Localized risk badge label, e.g., CRITICAL RISK / KRYTYCZNE ZAGROŻENIE" },
+                            executiveSummary: { type: "STRING", description: "Detailed 3-4 sentence assessment of the scene, primary threats, and civil defense readiness" },
+                            detectedHazards: {
+                                type: "ARRAY",
+                                items: {
+                                    type: "OBJECT",
+                                    properties: {
+                                        hazardName: { type: "STRING" },
+                                        severity: { type: "STRING", enum: ["CRITICAL", "HIGH", "MODERATE", "LOW"] },
+                                        observation: { type: "STRING", description: "What is specifically visible in the photo" },
+                                        threatImpact: { type: "STRING", description: "Why this poses a danger to civilians or violates safety rules" }
+                                    },
+                                    required: ["hazardName", "severity", "observation", "threatImpact"]
+                                }
+                            },
+                            mitigationActions: {
+                                type: "ARRAY",
+                                items: {
+                                    type: "OBJECT",
+                                    properties: {
+                                        priority: { type: "STRING", description: "e.g., IMMEDIATE / NATYCHMIAST, SHORT-TERM / KRÓTKOTERMINOWE" },
+                                        actionTitle: { type: "STRING" },
+                                        actionSteps: { type: "STRING" }
+                                    },
+                                    required: ["priority", "actionTitle", "actionSteps"]
+                                }
+                            },
+                            regulatoryReferences: {
+                                type: "ARRAY",
+                                items: {
+                                    type: "OBJECT",
+                                    properties: {
+                                        authority: { type: "STRING", description: "e.g., KG PSP / MSWiA, RCB, EU Civil Protection" },
+                                        documentTitle: { type: "STRING" },
+                                        relevance: { type: "STRING" }
+                                    },
+                                    required: ["authority", "documentTitle", "relevance"]
+                                }
+                            }
+                        },
+                        required: ["reportTitle", "riskLevel", "riskLabelLocalized", "executiveSummary", "detectedHazards", "mitigationActions", "regulatoryReferences"]
+                    }
+                }
+            };
+
+            try {
+                const result = await fetchWithRetry(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const candidate = result.candidates?.[0];
+                const rawJsonText = candidate?.content?.parts?.[0]?.text;
+
+                if (!rawJsonText) {
+                    throw new Error("Empty model response");
+                }
+
+                const parsedReport = JSON.parse(rawJsonText);
+
+                // Extract Google Search grounding sources if present
+                let sources = [];
+                const groundingMetadata = candidate.groundingMetadata;
+                if (groundingMetadata && groundingMetadata.groundingAttributions) {
+                    sources = groundingMetadata.groundingAttributions
+                        .map(attr => ({
+                            uri: attr.web?.uri,
+                            title: attr.web?.title
+                        }))
+                        .filter(s => s.uri && s.title);
+                }
+
+                state.lastReport = { ...parsedReport, sources };
+                renderReport(state.lastReport);
+
+            } catch (error) {
+                console.error("Safety Audit Error:", error);
+                showToast(i18n[state.lang].toastError, 'error');
+            } finally {
+                scanOverlay.classList.add('hidden');
+                analyzeBtn.disabled = false;
+            }
+        }
+
+        // =========================================================================
+        // 5. RENDERING THE STRUCTURED REPORT & EXPORT TOOLS
+        // =========================================================================
+        function renderReport(report) {
+            document.getElementById('report-standby').classList.add('hidden');
+            const container = document.getElementById('report-container');
+            container.classList.remove('hidden');
+
+            // Metadata & Title
+            const now = new Date();
+            document.getElementById('report-timestamp').textContent = now.toLocaleString(state.lang === 'pl' ? 'pl-PL' : 'en-GB');
+            document.getElementById('report-protocol-badge').textContent = state.protocol.replace('_', ' ');
+            document.getElementById('report-title').textContent = report.reportTitle;
+            document.getElementById('report-summary').textContent = report.executiveSummary;
+
+            // Risk Badge Styling
+            const riskBadge = document.getElementById('risk-badge');
+            const riskIcon = document.getElementById('risk-icon');
+            document.getElementById('risk-label').textContent = report.riskLabelLocalized || report.riskLevel;
+
+            const riskStyles = {
+                CRITICAL: 'bg-red-950/90 border-red-500 text-red-300 shadow-red-950/50',
+                HIGH: 'bg-orange-950/90 border-orange-500 text-orange-300 shadow-orange-950/50',
+                MODERATE: 'bg-amber-950/90 border-amber-500 text-amber-300 shadow-amber-950/50',
+                LOW: 'bg-emerald-950/90 border-emerald-500 text-emerald-300 shadow-emerald-950/50'
+            };
+            riskBadge.className = `px-4 py-2 rounded-xl border font-mono text-xs font-extrabold uppercase tracking-wider flex items-center gap-2 shadow-lg ${riskStyles[report.riskLevel] || riskStyles.MODERATE}`;
+            riskIcon.className = report.riskLevel === 'LOW' ? 'fa-solid fa-circle-check' : 'fa-solid fa-triangle-exclamation';
+
+            // Render Detected Hazards
+            const hazardsList = document.getElementById('hazards-list');
+            hazardsList.innerHTML = '';
+            (report.detectedHazards || []).forEach((h, idx) => {
+                const badgeColor = h.severity === 'CRITICAL' ? 'text-red-400 bg-red-950/60 border-red-800/60'
+                    : h.severity === 'HIGH' ? 'text-orange-400 bg-orange-950/60 border-orange-800/60'
+                    : h.severity === 'MODERATE' ? 'text-amber-400 bg-amber-950/60 border-amber-800/60'
+                    : 'text-emerald-400 bg-emerald-950/60 border-emerald-800/60';
+
+                const card = document.createElement('div');
+                card.className = 'p-4 rounded-xl bg-tactical-950/90 border border-slate-800 hover:border-slate-700 transition';
+                card.innerHTML = `
+                    <div class="flex items-start justify-between gap-2 mb-1.5">
+                        <h4 class="text-sm font-bold text-slate-100">${idx + 1}. ${escapeHtml(h.hazardName)}</h4>
+                        <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold border ${badgeColor}">${escapeHtml(h.severity)}</span>
+                    </div>
+                    <p class="text-xs text-slate-300 mb-1.5"><strong class="text-slate-400">${state.lang === 'pl' ? 'Obserwacja:' : 'Observation:'}</strong> ${escapeHtml(h.observation)}</p>
+                    <p class="text-xs text-slate-400"><strong class="text-slate-400">${state.lang === 'pl' ? 'Skutek / Zagrożenie:' : 'Impact:'}</strong> ${escapeHtml(h.threatImpact)}</p>
+                `;
+                hazardsList.appendChild(card);
+            });
+
+            // Render Mitigation Actions
+            const actionsList = document.getElementById('actions-list');
+            actionsList.innerHTML = '';
+            (report.mitigationActions || []).forEach((act) => {
+                const item = document.createElement('div');
+                item.className = 'p-3.5 rounded-xl bg-tactical-950/90 border border-slate-800 flex items-start gap-3';
+                item.innerHTML = `
+                    <div class="mt-0.5 w-6 h-6 rounded-lg bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center shrink-0 text-emerald-400 text-xs">
+                        <i class="fa-solid fa-check"></i>
+                    </div>
+                    <div class="flex-1">
+                        <div class="flex flex-wrap items-center gap-2 mb-1">
+                            <span class="text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-slate-800 text-amber-300 font-semibold">${escapeHtml(act.priority)}</span>
+                            <h4 class="text-xs sm:text-sm font-bold text-white">${escapeHtml(act.actionTitle)}</h4>
+                        </div>
+                        <p class="text-xs text-slate-300 leading-relaxed">${escapeHtml(act.actionSteps)}</p>
+                    </div>
+                `;
+                actionsList.appendChild(item);
+            });
+
+            // Render Regulatory References
+            const protocolsList = document.getElementById('protocols-list');
+            protocolsList.innerHTML = '';
+            (report.regulatoryReferences || []).forEach((ref) => {
+                const box = document.createElement('div');
+                box.className = 'p-3.5 rounded-xl bg-tactical-950/90 border border-slate-800 flex flex-col justify-between';
+                box.innerHTML = `
+                    <div>
+                        <span class="inline-block text-[10px] font-mono uppercase text-blue-400 font-bold mb-1">${escapeHtml(ref.authority)}</span>
+                        <h4 class="text-xs font-bold text-slate-100 mb-1">${escapeHtml(ref.documentTitle)}</h4>
+                    </div>
+                    <p class="text-[11px] text-slate-400 leading-snug">${escapeHtml(ref.relevance)}</p>
+                `;
+                protocolsList.appendChild(box);
+            });
+
+            // Render Search Grounding Links if available
+            const sourcesWrapper = document.getElementById('grounding-sources-wrapper');
+            const sourcesList = document.getElementById('grounding-sources-list');
+            sourcesList.innerHTML = '';
+            if (report.sources && report.sources.length > 0) {
+                sourcesWrapper.classList.remove('hidden');
+                // Deduplicate by URI
+                const uniqueSources = Array.from(new Map(report.sources.map(s => [s.uri, s])).values()).slice(0, 6);
+                uniqueSources.forEach(src => {
+                    const a = document.createElement('a');
+                    a.href = src.uri;
+                    a.target = '_blank';
+                    a.rel = 'noopener noreferrer';
+                    a.className = 'text-[11px] px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-blue-300 border border-slate-700 transition flex items-center gap-1.5 max-w-xs truncate';
+                    a.innerHTML = `<i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i><span class="truncate">${escapeHtml(src.title)}</span>`;
+                    sourcesList.appendChild(a);
+                });
+            } else {
+                sourcesWrapper.classList.add('hidden');
+            }
+
+            // Smooth scroll to report on mobile
+            if (window.innerWidth < 1024) {
+                container.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }
+
+        function formatReportAsPlainText() {
+            if (!state.lastReport) return '';
+            const r = state.lastReport;
+            let lines = [
+                `============================================================`,
+                `SCAN4SAFETY PL/EU — CIVIL DEFENSE & HAZARD AUDIT REPORT`,
+                `============================================================`,
+                `TITLE: ${r.reportTitle}`,
+                `RISK LEVEL: ${r.riskLabelLocalized} (${r.riskLevel})`,
+                `FRAMEWORK: ${state.protocol.toUpperCase()}`,
+                `DATE: ${new Date().toLocaleString()}`,
+                ``,
+                `--- EXECUTIVE SUMMARY ---`,
+                r.executiveSummary,
+                ``,
+                `--- DETECTED HAZARDS & VIOLATIONS ---`
+            ];
+
+            (r.detectedHazards || []).forEach((h, i) => {
+                lines.push(`${i + 1}. [${h.severity}] ${h.hazardName}`);
+                lines.push(`   Observation: ${h.observation}`);
+                lines.push(`   Impact: ${h.threatImpact}`);
+            });
+
+            lines.push(``, `--- RECOMMENDED MITIGATION & CIVIL DEFENSE ACTIONS ---`);
+            (r.mitigationActions || []).forEach((a, i) => {
+                lines.push(`${i + 1}. [${a.priority}] ${a.actionTitle}: ${a.actionSteps}`);
+            });
+
+            lines.push(``, `--- APPLICABLE EU DIRECTIVES & POLISH STATE PROTOCOLS ---`);
+            (r.regulatoryReferences || []).forEach((ref) => {
+                lines.push(`- ${ref.authority} | ${ref.documentTitle}: ${ref.relevance}`);
+            });
+
+            lines.push(``, `Emergency Contacts (PL/EU): 112 (General) | 998 (PSP Fire) | 997 (Police) | 999 (Medical)`);
+            return lines.join('\n');
+        }
+
+        function copyReportToClipboard() {
+            const text = formatReportAsPlainText();
+            if (!text) return;
+
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.position = 'fixed';
+            textarea.style.opacity = '0';
+            document.body.appendChild(textarea);
+            textarea.select();
+            try {
+                document.execCommand('copy');
+                showToast(i18n[state.lang].toastCopied, 'info');
+            } catch (err) {
+                showToast('Copy failed', 'error');
+            }
+            document.body.removeChild(textarea);
+        }
+
+        function downloadReportMarkdown() {
+            const text = formatReportAsPlainText();
+            if (!text) return;
+
+            const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Scan4Safety_${state.lang.toUpperCase()}_${new Date().toISOString().slice(0,10)}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+    </script>
+</body>
+</html>
