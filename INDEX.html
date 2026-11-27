@@ -1,0 +1,1433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#000000">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-title" content="SCAN4SAFETY">
+    <link id="pwa-manifest-link" rel="manifest" href="">
+    <title>SCAN4SAFETY PL/EU — CIVIL DEFENSE & HAZARD SCANNER</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: JetBrains Mono & Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@600;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['JetBrains Mono', 'Inter', 'monospace'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* High-Contrast Tactical Black & Yellow Wireframe Aesthetic */
+        * {
+            text-transform: uppercase;
+            box-sizing: border-box;
+        }
+        body {
+            background-color: #000000;
+            color: #facc15;
+            font-family: 'JetBrains Mono', monospace;
+        }
+        /* Scanner beam animation */
+        @keyframes scanLine {
+            0% { top: 0%; opacity: 0; }
+            15% { opacity: 1; }
+            85% { opacity: 1; }
+            100% { top: 100%; opacity: 0; }
+        }
+        .animate-scan {
+            animation: scanLine 2s linear infinite;
+        }
+        /* Minimalist Yellow Scrollbar */
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-track { background: #000000; }
+        ::-webkit-scrollbar-thumb { background: #facc15; }
+    </style>
+</head>
+<body class="bg-black text-yellow-400 font-mono antialiased min-h-screen flex flex-col selection:bg-yellow-400 selection:text-black">
+
+    <!-- Top Emergency Line -->
+    <div class="bg-black border-b border-yellow-400 px-3 py-1 text-[11px] font-bold">
+        <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
+            <div class="flex items-center gap-2">
+                <span class="inline-block w-2 h-2 border border-yellow-400 bg-yellow-400 animate-pulse"></span>
+                <span>EU-CPM & PL STATE PROTOCOLS [PSP / RCB / MSWIA]</span>
+            </div>
+            <div>
+                <i class="fa-solid fa-phone-volume mr-1"></i>
+                <span data-i18n="emergencyNumbers">ALARM: 112 | PSP: 998 | POLICJA: 997 | POGOTOWIE: 999</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Navigation Header -->
+    <header class="sticky top-0 z-40 bg-black border-b border-yellow-400">
+        <div class="max-w-7xl mx-auto px-3 sm:px-6 h-14 flex items-center justify-between gap-2">
+            <!-- Brand Identity -->
+            <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded border border-yellow-400 flex items-center justify-center">
+                    <i class="fa-solid fa-shield-halved text-yellow-400 text-sm"></i>
+                </div>
+                <div>
+                    <h1 class="font-extrabold text-sm sm:text-base tracking-wider text-yellow-400">SCAN4SAFETY <span class="border border-yellow-400 px-1 text-xs">PL/EU</span></h1>
+                </div>
+            </div>
+
+            <!-- View Mode Tabs: Scanner vs Offline Checklist -->
+            <nav class="flex items-center gap-1.5">
+                <button id="nav-scanner" onclick="switchView('scanner')" class="px-2.5 py-1 rounded border border-yellow-400 bg-yellow-400 text-black text-xs font-extrabold transition">
+                    <i class="fa-solid fa-camera mr-1"></i><span data-i18n="tabScanner">SCANNER</span>
+                </button>
+                <button id="nav-checklist" onclick="switchView('checklist')" class="px-2.5 py-1 rounded border border-yellow-400 bg-black text-yellow-400 hover:bg-yellow-400/10 text-xs font-extrabold transition">
+            <!-- Right Controls: Install PWA, Sirens & Language Switcher -->
+            <div class="flex items-center gap-1.5">
+                <button id="install-pwa-btn" onclick="installAndroidPWA()" class="px-2 py-1 rounded border border-yellow-400 bg-yellow-400 text-black hover:bg-black hover:text-yellow-400 text-xs font-extrabold transition flex items-center gap-1" title="Install Android App">
+                    <i class="fa-brands fa-android"></i>
+                    <span class="hidden sm:inline" data-i18n="installAppBtn">INSTALL</span>
+                </button>
+
+                <button onclick="toggleEmergencyModal()" class="px-2 py-1 rounded border border-yellow-400 bg-black hover:bg-yellow-400 hover:text-black text-yellow-400 text-xs font-bold transition" title="RCB / Sirens">
+                    <i class="fa-solid fa-tower-broadcast"></i>
+                    <span class="hidden md:inline ml-1" data-i18n="alertGuideBtn">SIRENS</span>
+                </button>
+
+                <!-- Language Toggle Switch (EN / PL) -->
+                <div class="flex items-center border border-yellow-400 rounded overflow-hidden" role="group">
+                    <button id="lang-en" onclick="setLanguage('en')" class="px-2 py-1 text-xs font-extrabold bg-yellow-400 text-black">
+                        EN
+                    </button>
+                    <button id="lang-pl" onclick="setLanguage('pl')" class="px-2 py-1 text-xs font-extrabold bg-black text-yellow-400">
+                        PL
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Toast Notification Banner -->
+    <div id="toast-container" class="fixed bottom-3 right-3 z-50 flex flex-col gap-1.5 max-w-xs w-full pointer-events-none"></div>
+
+    <!-- ===================================================================== -->
+    <!-- VIEW 1: PHOTO HAZARD & CIVIL DEFENSE SCANNER                          -->
+    <!-- ===================================================================== -->
+    <main id="view-scanner" class="flex-grow max-w-7xl w-full mx-auto px-3 sm:px-6 py-4">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+            
+            <!-- LEFT COLUMN: Framework, Capture & Quick Scenarios (5 cols) -->
+            <div class="lg:col-span-5 flex flex-col gap-4">
+                
+                <!-- Step 1: Inspection Protocol Mode -->
+                <div class="bg-black border border-yellow-400 rounded-lg p-3.5">
+                    <div class="text-xs font-extrabold tracking-wider mb-2.5 border-b border-yellow-400/40 pb-1.5">
+                        <i class="fa-solid fa-sliders mr-1.5"></i><span data-i18n="step1Title">1. INSPECTION PROTOCOL</span>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-2" id="protocol-selector">
+                        <button type="button" onclick="selectProtocol('civil_defense')" data-protocol="civil_defense" class="protocol-btn active text-left p-2.5 rounded border-2 border-yellow-400 bg-yellow-400 text-black transition flex flex-col gap-0.5">
+                            <div class="flex items-center justify-between text-[10px] font-bold">
+                                <i class="fa-solid fa-person-shelter"></i>
+                                <span>EU / RCB</span>
+                            </div>
+                            <span class="text-xs font-extrabold leading-tight" data-i18n="protoCivilTitle">CIVIL DEFENSE</span>
+                            <span class="text-[10px] opacity-80 truncate" data-i18n="protoCivilDesc">SHELTERS / MDS</span>
+                        </button>
+
+                        <button type="button" onclick="selectProtocol('fire_evac')" data-protocol="fire_evac" class="protocol-btn text-left p-2.5 rounded border border-yellow-400 bg-black text-yellow-400 hover:bg-yellow-400/10 transition flex flex-col gap-0.5">
+                            <div class="flex items-center justify-between text-[10px] font-bold">
+                                <i class="fa-solid fa-fire-extinguisher"></i>
+                                <span>PSP / DZ.U.</span>
+                            </div>
+                            <span class="text-xs font-extrabold leading-tight" data-i18n="protoFireTitle">FIRE & EVAC</span>
+                            <span class="text-[10px] opacity-80 truncate" data-i18n="protoFireDesc">EXITS / HYDRANTS</span>
+                        </button>
+
+                        <button type="button" onclick="selectProtocol('public_infra')" data-protocol="public_infra" class="protocol-btn text-left p-2.5 rounded border border-yellow-400 bg-black text-yellow-400 hover:bg-yellow-400/10 transition flex flex-col gap-0.5">
+                            <div class="flex items-center justify-between text-[10px] font-bold">
+                                <i class="fa-solid fa-road-barrier"></i>
+                                <span>EU-CPM</span>
+                            </div>
+                            <span class="text-xs font-extrabold leading-tight" data-i18n="protoInfraTitle">URBAN / INFRA</span>
+                            <span class="text-[10px] opacity-80 truncate" data-i18n="protoInfraDesc">FLOOD / POWER</span>
+                        </button>
+
+                        <button type="button" onclick="selectProtocol('cbrn_hazmat')" data-protocol="cbrn_hazmat" class="protocol-btn text-left p-2.5 rounded border border-yellow-400 bg-black text-yellow-400 hover:bg-yellow-400/10 transition flex flex-col gap-0.5">
+                            <div class="flex items-center justify-between text-[10px] font-bold">
+                                <i class="fa-solid fa-biohazard"></i>
+                                <span>CBRN / GIOŚ</span>
+                            </div>
+                            <span class="text-xs font-extrabold leading-tight" data-i18n="protoCbrnTitle">HAZMAT / CBRN</span>
+                            <span class="text-[10px] opacity-80 truncate" data-i18n="protoCbrnDesc">SPILLS / GAS</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Step 2: Visual Evidence Capture / Upload -->
+                <div class="bg-black border border-yellow-400 rounded-lg p-3.5">
+                    <div class="flex items-center justify-between mb-2.5 border-b border-yellow-400/40 pb-1.5">
+                        <span class="text-xs font-extrabold tracking-wider">
+                            <i class="fa-solid fa-camera mr-1.5"></i><span data-i18n="step2Title">2. VISUAL EVIDENCE</span>
+                        </span>
+                        <button id="clear-image-btn" onclick="resetImage()" class="hidden text-[11px] font-bold border border-yellow-400 px-1.5 py-0.5 rounded hover:bg-yellow-400 hover:text-black transition">
+                            <i class="fa-solid fa-xmark mr-1"></i><span data-i18n="clearBtn">CLEAR</span>
+                        </button>
+                    </div>
+
+                    <!-- Dropzone / Preview Box -->
+                    <div id="dropzone" class="relative w-full aspect-[4/3] rounded border border-dashed border-yellow-400 bg-black overflow-hidden flex flex-col items-center justify-center transition">
+                        
+                        <!-- Empty State Prompt -->
+                        <div id="upload-placeholder" class="text-center p-4 flex flex-col items-center">
+                            <div class="w-12 h-12 rounded border border-yellow-400 flex items-center justify-center mb-2.5">
+                                <i class="fa-solid fa-crosshairs text-xl text-yellow-400"></i>
+                            </div>
+                            <p class="text-xs font-extrabold mb-1" data-i18n="dropTitle">CAPTURE OR DROP IMAGE</p>
+                            <p class="text-[10px] opacity-80 max-w-xs" data-i18n="dropSubtitle">JPG / PNG / WEBP — FRAME EXITS, HAZARDS, OR SHELTER STRUCTURE CLEARLY</p>
+                        </div>
+
+                        <!-- Live Camera Video Stream -->
+                        <video id="camera-stream" class="hidden w-full h-full object-cover" autoplay playsinline></video>
+
+                        <!-- Image Preview -->
+                        <img id="image-preview" class="hidden w-full h-full object-contain bg-black" alt="SCAN TARGET" />
+
+                        <!-- Scanning Laser Overlay -->
+                        <div id="scan-overlay" class="hidden absolute inset-0 bg-black/80 flex flex-col items-center justify-center z-20">
+                            <div class="absolute left-0 right-0 h-0.5 bg-yellow-400 animate-scan"></div>
+                            <div class="border border-yellow-400 bg-black px-4 py-2.5 rounded text-center">
+                                <i class="fa-solid fa-radar fa-spin text-yellow-400 text-lg mb-1"></i>
+                                <p class="text-xs font-extrabold tracking-wider" data-i18n="scanningText">SCANNING EU & PL PROTOCOLS...</p>
+                            </div>
+                        </div>
+
+                        <!-- Hidden File Inputs -->
+                        <input type="file" id="file-input" accept="image/*" class="hidden" onchange="handleFileSelect(event)">
+                        <input type="file" id="camera-input" accept="image/*" capture="environment" class="hidden" onchange="handleFileSelect(event)">
+                    </div>
+
+                    <!-- Acquisition Buttons -->
+                    <div id="capture-controls" class="grid grid-cols-2 gap-2 mt-2.5">
+                        <button type="button" onclick="triggerCamera()" class="py-2 px-2.5 rounded border border-yellow-400 bg-black hover:bg-yellow-400 hover:text-black text-xs font-extrabold transition flex items-center justify-center gap-1.5">
+                            <i class="fa-solid fa-camera"></i>
+                            <span data-i18n="takePhotoBtn">CAMERA</span>
+                        </button>
+                        <button type="button" onclick="document.getElementById('file-input').click()" class="py-2 px-2.5 rounded border border-yellow-400 bg-black hover:bg-yellow-400 hover:text-black text-xs font-extrabold transition flex items-center justify-center gap-1.5">
+                            <i class="fa-solid fa-upload"></i>
+                            <span data-i18n="uploadFileBtn">UPLOAD</span>
+                        </button>
+                    </div>
+
+                    <!-- Live Webcam Snap Controls -->
+                    <div id="webcam-controls" class="hidden grid grid-cols-2 gap-2 mt-2.5">
+                        <button type="button" onclick="snapWebcamPhoto()" class="py-2 px-2.5 rounded border border-yellow-400 bg-yellow-400 text-black text-xs font-extrabold transition flex items-center justify-center gap-1.5">
+                            <i class="fa-solid fa-circle-dot"></i>
+                            <span data-i18n="snapBtn">SNAP</span>
+                        </button>
+                        <button type="button" onclick="stopWebcam()" class="py-2 px-2.5 rounded border border-yellow-400 bg-black text-yellow-400 text-xs font-extrabold transition flex items-center justify-center gap-1.5">
+                            <i class="fa-solid fa-xmark"></i>
+                            <span data-i18n="cancelCamBtn">CANCEL</span>
+                        </button>
+                    </div>
+
+                    <!-- Optional Context Input -->
+                    <div class="mt-3">
+                        <label for="context-notes" class="block text-[11px] font-bold mb-1" data-i18n="contextLabel">
+                            CONTEXT / LOCATION NOTES (OPTIONAL)
+                        </label>
+                        <input type="text" id="context-notes" class="w-full rounded bg-black border border-yellow-400 focus:outline-none focus:ring-1 focus:ring-yellow-400 text-xs text-yellow-400 p-2 placeholder-yellow-400/40" data-i18n-placeholder="contextPlaceholder" placeholder="E.G. BASEMENT MDS, SCHOOL CORRIDOR...">
+                    </div>
+
+                    <!-- Run Diagnostic Button -->
+                    <button id="analyze-btn" type="button" onclick="runSafetyAudit()" disabled class="mt-3 w-full py-3 px-3 rounded border-2 border-yellow-400 bg-yellow-400 text-black hover:bg-black hover:text-yellow-400 disabled:bg-black disabled:text-yellow-400/30 disabled:border-yellow-400/30 disabled:cursor-not-allowed font-extrabold text-xs tracking-wider transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-shield-virus"></i>
+                        <span data-i18n="runAuditBtn">RUN SAFETY & CIVIL DEFENSE AUDIT</span>
+                    </button>
+                </div>
+
+                <!-- Sample Scenarios Quick-Load -->
+                <div class="bg-black border border-yellow-400 rounded-lg p-3">
+                    <p class="text-[10px] font-bold mb-2 opacity-80" data-i18n="demoTitle">TEST SCENARIOS:</p>
+                    <div class="flex flex-wrap gap-1.5">
+                        <button type="button" onclick="loadSyntheticScenario('blocked_exit')" class="text-[10px] font-bold px-2 py-1 rounded border border-yellow-400 hover:bg-yellow-400 hover:text-black transition">
+                            [1] <span data-i18n="demoExit">BLOCKED EXIT</span>
+                        </button>
+                        <button type="button" onclick="loadSyntheticScenario('shelter_basement')" class="text-[10px] font-bold px-2 py-1 rounded border border-yellow-400 hover:bg-yellow-400 hover:text-black transition">
+                            [2] <span data-i18n="demoBasement">MDS BASEMENT</span>
+                        </button>
+                        <button type="button" onclick="loadSyntheticScenario('electrical_flood')" class="text-[10px] font-bold px-2 py-1 rounded border border-yellow-400 hover:bg-yellow-400 hover:text-black transition">
+                            [3] <span data-i18n="demoFlood">FLOODED POWER</span>
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- RIGHT COLUMN: Detailed Civil Defense & Fire Service Audit Report (7 cols) -->
+            <div class="lg:col-span-7 flex flex-col gap-4">
+                
+                <!-- Empty / Standby State -->
+                <div id="report-standby" class="bg-black border border-yellow-400 rounded-lg p-6 sm:p-10 text-center flex flex-col items-center justify-center min-h-[420px]">
+                    <div class="w-14 h-14 rounded border border-yellow-400 flex items-center justify-center mb-3">
+                        <i class="fa-solid fa-file-shield text-2xl text-yellow-400"></i>
+                    </div>
+                    <h2 class="text-sm font-extrabold mb-2 tracking-wider" data-i18n="standbyTitle">AWAITING VISUAL INPUT FOR AUDIT</h2>
+                    <p class="text-xs opacity-80 max-w-md mb-5 leading-relaxed" data-i18n="standbyDesc">
+                        CAPTURE OR UPLOAD A PHOTO TO EVALUATE HAZARDS AGAINST EU CIVIL PROTECTION MECHANISMS AND POLISH PSP / RCB / MSWIA DIRECTIVES.
+                    </p>
+                    
+                    <!-- Verified Standards Outlined Boxes -->
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 w-full text-left">
+                        <div class="p-2.5 rounded border border-yellow-400">
+                            <div class="text-xs font-extrabold mb-0.5">EU-CPM</div>
+                            <div class="text-[10px] opacity-80">DECISION 1313/2013/EU & DISASTER RESILIENCE</div>
+                        </div>
+                        <div class="p-2.5 rounded border border-yellow-400">
+                            <div class="text-xs font-extrabold mb-0.5">PSP / MSWIA</div>
+                            <div class="text-[10px] opacity-80">FIRE PROTECTION ACT & MDS SHELTER RULES</div>
+                        </div>
+                        <div class="p-2.5 rounded border border-yellow-400">
+                            <div class="text-xs font-extrabold mb-0.5">RCB (PL)</div>
+                            <div class="text-[10px] opacity-80">CRISIS MANUALS & CIVILIAN PREPAREDNESS</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Active Report Container -->
+                <div id="report-container" class="hidden flex flex-col gap-4">
+                    
+                    <!-- Top Summary & Risk Level Card -->
+                    <div class="bg-black border border-yellow-400 rounded-lg p-4">
+                        <div class="flex flex-wrap items-start justify-between gap-3 pb-3 border-b border-yellow-400/50">
+                            <div>
+                                <div class="flex items-center gap-2 text-[10px] opacity-80 mb-1">
+                                    <span id="report-timestamp"></span>
+                                    <span>|</span>
+                                    <span id="report-protocol-badge" class="border border-yellow-400 px-1.5"></span>
+                                </div>
+                                <h2 id="report-title" class="text-base font-extrabold"></h2>
+                            </div>
+
+                            <!-- Severity Badge -->
+                            <div id="risk-badge" class="px-3 py-1.5 rounded border-2 border-yellow-400 text-xs font-extrabold tracking-wider flex items-center gap-1.5">
+                                <i id="risk-icon" class="fa-solid fa-triangle-exclamation"></i>
+                                <span id="risk-label"></span>
+                            </div>
+                        </div>
+
+                        <!-- Executive Assessment -->
+                        <div class="mt-3">
+                            <h3 class="text-[11px] font-extrabold opacity-80 mb-1" data-i18n="execSummaryTitle">EXECUTIVE ASSESSMENT</h3>
+                            <p id="report-summary" class="text-xs leading-relaxed"></p>
+                        </div>
+
+                        <!-- Export Toolbar -->
+                        <div class="mt-4 pt-3 border-t border-yellow-400/50 flex flex-wrap items-center justify-between gap-2">
+                            <div class="flex gap-2">
+                                <button type="button" onclick="copyReportToClipboard()" class="px-2.5 py-1 rounded border border-yellow-400 hover:bg-yellow-400 hover:text-black text-[11px] font-extrabold transition">
+                                    <i class="fa-regular fa-copy mr-1"></i><span data-i18n="copyBtn">COPY</span>
+                                </button>
+                                <button type="button" onclick="downloadReportMarkdown()" class="px-2.5 py-1 rounded border border-yellow-400 hover:bg-yellow-400 hover:text-black text-[11px] font-extrabold transition">
+                                    <i class="fa-solid fa-download mr-1"></i><span data-i18n="exportBtn">SAVE .TXT</span>
+                                </button>
+                            </div>
+                            <span class="text-[10px] opacity-70" data-i18n="aiDisclaimer">VERIFY WITH LOCAL PSP / AUTHORITIES</span>
+                        </div>
+                    </div>
+
+                    <!-- Identified Hazards List -->
+                    <div class="bg-black border border-yellow-400 rounded-lg p-4">
+                        <h3 class="text-xs font-extrabold tracking-wider border-b border-yellow-400/50 pb-2 mb-3">
+                            <i class="fa-solid fa-magnifying-glass-chart mr-1.5"></i>
+                            <span data-i18n="hazardsSectionTitle">DETECTED HAZARDS & VIOLATIONS</span>
+                        </h3>
+                        <div id="hazards-list" class="flex flex-col gap-2.5"></div>
+                    </div>
+
+                    <!-- NEW: Hazard Scenario (3 Probable Escalation Variants) -->
+                    <div class="bg-black border border-yellow-400 rounded-lg p-4">
+                        <h3 class="text-xs font-extrabold tracking-wider border-b border-yellow-400/50 pb-2 mb-3">
+                            <i class="fa-solid fa-burst mr-1.5"></i>
+                            <span data-i18n="scenariosSectionTitle">HAZARD SCENARIO (3 PROBABLE VARIANTS)</span>
+                        </h3>
+                        <div id="scenarios-list" class="grid grid-cols-1 md:grid-cols-3 gap-2.5"></div>
+                    </div>
+
+                    <!-- NEW: Fixes (Quick & Essential Solutions for Top Threats) -->
+                    <div class="bg-black border-2 border-yellow-400 rounded-lg p-4">
+                        <h3 class="text-xs font-extrabold tracking-wider border-b border-yellow-400/50 pb-2 mb-3">
+                            <i class="fa-solid fa-wrench mr-1.5"></i>
+                            <span data-i18n="fixesSectionTitle">FIXES (ESSENTIAL RAPID SOLUTIONS)</span>
+                        </h3>
+                        <div id="fixes-list" class="flex flex-col gap-2"></div>
+                    </div>
+
+                    <!-- Immediate Action Plan -->
+                    <div class="bg-black border border-yellow-400 rounded-lg p-4">
+                        <h3 class="text-xs font-extrabold tracking-wider border-b border-yellow-400/50 pb-2 mb-3">
+                            <i class="fa-solid fa-list-check mr-1.5"></i>
+                            <span data-i18n="actionsSectionTitle">CIVIL DEFENSE & MITIGATION ACTIONS</span>
+                        </h3>
+                        <div id="actions-list" class="flex flex-col gap-2"></div>
+                    </div>
+
+                    <!-- Legal Directives & Official Citations -->
+                    <div class="bg-black border border-yellow-400 rounded-lg p-4">
+                        <h3 class="text-xs font-extrabold tracking-wider border-b border-yellow-400/50 pb-2 mb-3">
+                            <i class="fa-solid fa-book-bookmark mr-1.5"></i>
+                            <span data-i18n="protocolsSectionTitle">EU DIRECTIVES & POLISH STATE PROTOCOLS</span>
+                        </h3>
+                        <div id="protocols-list" class="grid grid-cols-1 md:grid-cols-2 gap-2.5 mb-3"></div>
+                        
+                        <div id="grounding-sources-wrapper" class="hidden pt-2.5 border-t border-yellow-400/40">
+                            <p class="text-[10px] font-bold mb-1.5" data-i18n="verifiedLinksTitle">VERIFIED OFFICIAL SOURCES:</p>
+                            <div id="grounding-sources-list" class="flex flex-wrap gap-1.5"></div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- ===================================================================== -->
+    <!-- VIEW 2: INTERACTIVE OFFLINE CIVIL DEFENSE CHECKLIST (RCB 72H & MDS)   -->
+    <!-- ===================================================================== -->
+    <section id="view-checklist" class="hidden flex-grow max-w-5xl w-full mx-auto px-3 sm:px-6 py-4">
+        <div class="bg-black border border-yellow-400 rounded-lg p-4 mb-4">
+            <div class="flex flex-wrap items-center justify-between gap-3 border-b border-yellow-400 pb-3 mb-3">
+                <div>
+                    <h2 class="text-sm sm:text-base font-extrabold tracking-wider" data-i18n="chkMainTitle">OFFLINE CIVIL DEFENSE READINESS CHECKLIST</h2>
+                    <p class="text-[11px] opacity-80" data-i18n="chkMainSub">BASED ON RCB (72H EVACUATION BACKPACK) & KG PSP (MDS SHELTER) GUIDELINES</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span id="chk-progress-text" class="text-xs font-extrabold border border-yellow-400 px-2.5 py-1 rounded">0% READY</span>
+                    <button onclick="resetChecklist()" class="text-xs font-extrabold border border-yellow-400 px-2.5 py-1 rounded hover:bg-yellow-400 hover:text-black transition">
+                        <i class="fa-solid fa-rotate-left mr-1"></i><span data-i18n="chkResetBtn">RESET</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Wireframe Progress Bar -->
+            <div class="w-full h-3 border border-yellow-400 rounded p-0.5 mb-4">
+                <div id="chk-progress-bar" class="h-full bg-yellow-400 transition-all duration-300" style="width: 0%;"></div>
+            </div>
+
+            <!-- Checklist Categories Grid -->
+            <div id="checklist-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+        </div>
+    </section>
+
+    <!-- Footer with Official Polish & EU Civil Defense Portals -->
+    <footer class="bg-black border-t border-yellow-400 mt-8 py-4 px-3 text-[11px]">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-3">
+            <div>
+                <p class="font-extrabold">SCAN4SAFETY PL/EU — CIVILIAN & COMMUNITY PROTECTION</p>
+                <p class="text-[10px] opacity-80" data-i18n="footerDisclaimer">IN IMMEDIATE LIFE-THREATENING EMERGENCIES CALL 112 OR 998.</p>
+            </div>
+            <div class="flex flex-wrap items-center gap-3 font-bold">
+                <a href="https://www.gov.pl/web/rcb" target="_blank" rel="noopener noreferrer" class="underline hover:bg-yellow-400 hover:text-black px-1">RCB.GOV.PL</a>
+                <a href="https://www.gov.pl/web/kgpsp" target="_blank" rel="noopener noreferrer" class="underline hover:bg-yellow-400 hover:text-black px-1">KG PSP</a>
+                <a href="https://www.gov.pl/web/obrona-cywilna" target="_blank" rel="noopener noreferrer" class="underline hover:bg-yellow-400 hover:text-black px-1">OBRONA CYWILNA</a>
+                <a href="https://civil-protection-humanitarian-aid.ec.europa.eu/" target="_blank" rel="noopener noreferrer" class="underline hover:bg-yellow-400 hover:text-black px-1">EU CIVIL PROTECTION</a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Modal: Polish Acoustic Alarm Signals & RCB Alert Quick Reference -->
+    <div id="emergency-modal" class="hidden fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-3">
+        <div class="bg-black border-2 border-yellow-400 rounded-lg max-w-xl w-full max-h-[90vh] overflow-y-auto p-4">
+            <div class="flex items-center justify-between pb-2.5 border-b border-yellow-400">
+                <h3 class="text-sm font-extrabold flex items-center gap-2">
+                    <i class="fa-solid fa-tower-broadcast"></i>
+                    <span data-i18n="modalTitle">PL CIVIL DEFENSE SIGNALS & EMERGENCY NUMBERS</span>
+                </h3>
+                <button onclick="toggleEmergencyModal()" class="border border-yellow-400 px-2 py-0.5 rounded hover:bg-yellow-400 hover:text-black font-bold text-xs">
+                    X
+                </button>
+            </div>
+            
+            <div class="mt-3 space-y-3 text-xs">
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    <div class="p-2.5 rounded border border-yellow-400 text-center">
+    <!-- Modal: Android App Installation Guide -->
+    <div id="install-modal" class="hidden fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-3">
+        <div class="bg-black border-2 border-yellow-400 rounded-lg max-w-md w-full p-4">
+            <div class="flex items-center justify-between pb-2.5 border-b border-yellow-400">
+                <h3 class="text-sm font-extrabold flex items-center gap-2">
+                    <i class="fa-brands fa-android"></i>
+                    <span data-i18n="installModalTitle">INSTALL ON ANDROID PHONE</span>
+                </h3>
+                <button onclick="toggleInstallModal()" class="border border-yellow-400 px-2 py-0.5 rounded hover:bg-yellow-400 hover:text-black font-bold text-xs">
+                    X
+                </button>
+            </div>
+            <div class="mt-3 space-y-2.5 text-xs">
+                <p class="text-[11px] opacity-90 leading-relaxed" data-i18n="installModalIntro">
+                    TO INSTALL SCAN4SAFETY AS A STANDALONE ANDROID APP (WITH OFFLINE CHECKLIST & CAMERA ACCESS):
+                </p>
+                <div class="p-2.5 rounded border border-yellow-400 space-y-1.5 text-[11px]">
+                    <p><strong>1.</strong> <span data-i18n="installStep1">HOST THIS HTML FILE ONLINE (E.G. GITHUB PAGES, NETLIFY, VERCEL, OR LOVABLE/BASE44) OVER HTTPS.</span></p>
+                    <p><strong>2.</strong> <span data-i18n="installStep2">OPEN THE URL IN GOOGLE CHROME ON YOUR ANDROID PHONE.</span></p>
+                    <p><strong>3.</strong> <span data-i18n="installStep3">TAP THE CHROME MENU (⋮) IN THE TOP-RIGHT CORNER AND SELECT "ADD TO HOME SCREEN" OR "INSTALL APP".</span></p>
+                </div>
+                <div class="pt-1 flex justify-end">
+                    <button onclick="downloadHtmlFile()" class="px-3 py-1.5 rounded border border-yellow-400 bg-yellow-400 text-black font-extrabold text-xs hover:bg-black hover:text-yellow-400 transition">
+                        <i class="fa-solid fa-file-code mr-1"></i><span data-i18n="downloadHtmlBtn">DOWNLOAD INDEX.HTML</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden Canvas -->
+    <canvas id="helper-canvas" class="hidden"></canvas>
+
+    <script>
+        // =========================================================================
+        // 1. STATE, CHECKLIST DATA & LOCALIZATION DICTIONARY (EN & PL)
+        // =========================================================================
+        const state = {
+            lang: 'en',
+            view: 'scanner',
+            protocol: 'civil_defense',
+            imageBase64: null,
+            imageMimeType: 'image/jpeg',
+            webcamStream: null,
+            lastReport: null,
+            checkedItems: JSON.parse(localStorage.getItem('scan4safety_checklist') || '{}')
+        };
+
+        const checklistData = [
+            {
+                id: 'rcb_bag',
+                titleEn: '1. RCB 72H EVACUATION BACKPACK (PLECAK EWAKUACYJNY)',
+                titlePl: '1. PLECAK EWAKUACYJNY RCB (GOTOWOŚĆ 72H)',
+                items: [
+                    { id: 'c1', en: 'WATER (MIN. 3L PER PERSON) + WATER FILTER / PURIFICATION TABLETS', pl: 'WODA (MIN. 3L NA OSOBĘ) + FILTR / TABLETKI DO UZDATNIANIA' },
+                    { id: 'c2', en: 'HIGH-CALORIE NON-PERISHABLE FOOD FOR 3 DAYS (NO COOKING REQUIRED)', pl: 'ŻYWNOŚĆ WYSOKOKALORYCZNA NA 3 DNI (NIEWYMAGAJĄCA GOTOWANIA)' },
+                    { id: 'c3', en: 'BATTERY/CRANK RADIO (FM/AM) + FLASHLIGHT + SPARE BATTERIES + POWERBANK', pl: 'RADIO NA BATERIE/KORBKĘ + LATARKA + ZAPAS BATERII + POWERBANK' },
+                    { id: 'c4', en: 'FIRST AID KIT + PERSONAL PRESCRIPTION MEDICATIONS + FFP2/FFP3 MASKS', pl: 'APTECZKA PIERWSZEJ POMOCY + LEKI STAŁE + MASKI FFP2/FFP3' },
+                    { id: 'c5', en: 'COPIES OF ID DOCUMENTS, CASH IN SMALL BILLS, WHISTLE, MULTI-TOOL', pl: 'KOPIE DOKUMENTÓW, GOTÓWKA W NISKICH NOMINAŁACH, GWIZDEK, SCYZORYK' }
+                ]
+            },
+            {
+                id: 'mds_shelter',
+                titleEn: '2. BASEMENT / MDS SHELTER READINESS (WYTYCZNE KG PSP)',
+                titlePl: '2. GOTOWOŚĆ PIWNICY / MDS (WYTYCZNE KG PSP)',
+                items: [
+                    { id: 'c6', en: 'CLEAR EVACUATION ROUTES — ZERO FLAMMABLE ITEMS OR OBSTACLES IN CORRIDORS', pl: 'DROŻNE DROGI EWAKUACYJNE — BRAK MATERIAŁÓW PALNYCH I PRZESZKÓD' },
+                    { id: 'c7', en: 'KNOW LOCATION OF MAIN GAS, WATER, AND ELECTRICAL SHUT-OFF VALVES', pl: 'ZNAJOMOŚĆ LOKALIZACJI GŁÓWNYCH ZAWORÓW GAZU, WODY I PRĄDU' },
+                    { id: 'c8', en: 'REINFORCED CEILING AREA AWAY FROM WINDOWS AND UNPROTECTED GAS PIPES', pl: 'STREFA POD STROPEM Z DALA OD OKIEN I NIEOSŁONIĘTYCH RUR GAZOWYCH' },
+                    { id: 'c9', en: 'ABC DRY POWDER FIRE EXTINGUISHER + CARBON MONOXIDE & SMOKE DETECTORS', pl: 'SPRAWNA GAŚNICA PROSZKOWA ABC + CZUJNIKI DYMU I TLENKU WĘGLA (CZADU)' },
+                    { id: 'c10', en: 'NEIGHBORHOOD MUTUAL AID PLAN FOR ELDERLY / MOBILITY-IMPAIRED RESIDENTS', pl: 'SĄSIEDZKI PLAN POMOCY DLA SENIORÓW I OSÓB Z NIEPEŁNOSPRAWNOŚCIAMI' }
+                ]
+            }
+        ];
+
+        const i18n = {
+            en: {
+                emergencyNumbers: "ALARM: 112 | PSP: 998 | POLICE: 997 | MEDICAL: 999",
+                tabScanner: "SCANNER",
+                tabChecklist: "CHECKLIST [RCB/MDS]",
+                installAppBtn: "INSTALL",
+                alertGuideBtn: "SIRENS",
+                installModalTitle: "INSTALL ON ANDROID PHONE",
+                installModalIntro: "TO INSTALL SCAN4SAFETY AS A STANDALONE ANDROID APP (WITH OFFLINE CHECKLIST & CAMERA ACCESS):",
+                installStep1: "HOST THIS HTML FILE ONLINE (E.G. GITHUB PAGES, NETLIFY, VERCEL, OR LOVABLE/BASE44) OVER HTTPS.",
+                installStep2: "OPEN THE URL IN GOOGLE CHROME ON YOUR ANDROID PHONE.",
+                installStep3: "TAP THE CHROME MENU (⋮) IN THE TOP-RIGHT CORNER AND SELECT 'ADD TO HOME SCREEN' OR 'INSTALL APP'.",
+                downloadHtmlBtn: "DOWNLOAD INDEX.HTML",
+                step1Title: "1. INSPECTION PROTOCOL",
+                protoCivilTitle: "CIVIL DEFENSE",
+                protoCivilDesc: "SHELTERS / MDS",
+                protoFireTitle: "FIRE & EVAC",
+                protoFireDesc: "EXITS / HYDRANTS",
+                protoInfraTitle: "URBAN / INFRA",
+                protoInfraDesc: "FLOOD / POWER",
+                protoCbrnTitle: "HAZMAT / CBRN",
+                protoCbrnDesc: "SPILLS / GAS",
+                step2Title: "2. VISUAL EVIDENCE",
+                clearBtn: "CLEAR",
+                dropTitle: "CAPTURE OR DROP IMAGE",
+                dropSubtitle: "JPG / PNG / WEBP — FRAME EXITS, HAZARDS, OR SHELTER STRUCTURE CLEARLY",
+                scanningText: "SCANNING EU & PL PROTOCOLS...",
+                takePhotoBtn: "CAMERA",
+                uploadFileBtn: "UPLOAD",
+                snapBtn: "SNAP",
+                cancelCamBtn: "CANCEL",
+                contextLabel: "CONTEXT / LOCATION NOTES (OPTIONAL)",
+                contextPlaceholder: "E.G. BASEMENT MDS, SCHOOL CORRIDOR...",
+                runAuditBtn: "RUN SAFETY & CIVIL DEFENSE AUDIT",
+                demoTitle: "TEST SCENARIOS:",
+                demoExit: "BLOCKED EXIT",
+                demoBasement: "MDS BASEMENT",
+                demoFlood: "FLOODED POWER",
+                standbyTitle: "AWAITING VISUAL INPUT FOR AUDIT",
+                standbyDesc: "CAPTURE OR UPLOAD A PHOTO TO EVALUATE HAZARDS AGAINST EU CIVIL PROTECTION MECHANISMS AND POLISH PSP / RCB / MSWIA DIRECTIVES.",
+                execSummaryTitle: "EXECUTIVE ASSESSMENT",
+                copyBtn: "COPY",
+                exportBtn: "SAVE .TXT",
+                aiDisclaimer: "VERIFY WITH LOCAL PSP / AUTHORITIES",
+                hazardsSectionTitle: "DETECTED HAZARDS & VIOLATIONS",
+                scenariosSectionTitle: "HAZARD SCENARIO (3 PROBABLE VARIANTS)",
+                fixesSectionTitle: "FIXES (ESSENTIAL RAPID SOLUTIONS)",
+                actionsSectionTitle: "CIVIL DEFENSE & MITIGATION ACTIONS",
+                protocolsSectionTitle: "EU DIRECTIVES & POLISH STATE PROTOCOLS",
+                verifiedLinksTitle: "VERIFIED OFFICIAL SOURCES:",
+                chkMainTitle: "OFFLINE CIVIL DEFENSE READINESS CHECKLIST",
+                chkMainSub: "BASED ON RCB (72H EVACUATION BACKPACK) & KG PSP (MDS SHELTER) GUIDELINES",
+                chkResetBtn: "RESET",
+                footerDisclaimer: "IN IMMEDIATE LIFE-THREATENING EMERGENCIES CALL 112 OR 998.",
+                modalTitle: "PL CIVIL DEFENSE SIGNALS & EMERGENCY NUMBERS",
+                num112: "EU ALARM",
+                num998: "FIRE (PSP)",
+                num997: "POLICE",
+                num999: "MEDICAL",
+                sirenAnnounce: "ALARM ANNOUNCEMENT (OGŁOSZENIE ALARMU)",
+                sirenAnnounceDesc: "MODULATED SIREN SOUND FOR 3 MINUTES. CHECK ALERT RCB SMS, TURN ON LOCAL RADIO/TV, CLOSE WINDOWS, MOVE TO SHELTER (MDS), ASSIST NEIGHBORS.",
+                sirenCancel: "ALARM CANCELLATION (ODWOŁANIE ALARMU)",
+                sirenCancelDesc: "CONTINUOUS STEADY SIREN SOUND FOR 3 MINUTES. FOLLOW OFFICIAL COMMUNIQUÉS FROM MUNICIPAL AUTHORITIES AND PSP.",
+                toastCopied: "REPORT COPIED TO CLIPBOARD.",
+                toastError: "ANALYSIS FAILED. CHECK CONNECTION.",
+                toastCamError: "CAMERA UNAVAILABLE; OPENING FILE PICKER."
+            },
+            pl: {
+                emergencyNumbers: "ALARM: 112 | PSP: 998 | POLICJA: 997 | POGOTOWIE: 999",
+                tabScanner: "SKANER",
+                tabChecklist: "LISTA [RCB/MDS]",
+                installAppBtn: "INSTALUJ",
+                alertGuideBtn: "SYRENY",
+                installModalTitle: "INSTALACJA NA TELEFONIE ANDROID",
+                installModalIntro: "ABY ZAINSTALOWAĆ SCAN4SAFETY JAKO SAMODZIELNĄ APLIKACJĘ ANDROID (Z LISTĄ OFFLINE I APARATEM):",
+                installStep1: "UMIEŚĆ TEN PLIK HTML NA SERWERZE HTTPS (NP. GITHUB PAGES, NETLIFY, VERCEL LUB BASE44).",
+                installStep2: "OTWÓRZ LINK W PRZEGLĄDARCE GOOGLE CHROME NA TELEFONIE ANDROID.",
+                installStep3: "KLIKNIJ MENU CHROME (⋮) W PRAWYM GÓRNYM ROGU I WYBIERZ 'ZAINSTALUJ APLIKACJĘ' LUB 'DODAJ DO EKRANU GŁÓWNEGO'.",
+                downloadHtmlBtn: "POBIERZ INDEX.HTML",
+                step1Title: "1. PROTOKÓŁ KONTROLI",
+                protoCivilTitle: "OBRONA CYWILNA",
+                protoCivilDesc: "SCHRONY / MDS",
+                protoFireTitle: "POŻAR I EWAKUACJA",
+                protoFireDesc: "WYJŚCIA / HYDRANTY",
+                protoInfraTitle: "INFRASTRUKTURA",
+                protoInfraDesc: "ZALANIA / PRĄD",
+                protoCbrnTitle: "CBRN / CHEMIA",
+                protoCbrnDesc: "WYCIEKI / GAZ",
+                step2Title: "2. MATERIAŁ WIZUALNY",
+                clearBtn: "WYCZYŚĆ",
+                dropTitle: "ZRÓB ZDJĘCIE LUB UPUSĆ PLIK",
+                dropSubtitle: "JPG / PNG / WEBP — UCHWYĆ WYJŚCIA, ZAGROŻENIA LUB KONSTRUKCJĘ SCHRONU",
+                scanningText: "ANALIZA PROTOKOŁÓW UE I RP...",
+                takePhotoBtn: "APARAT",
+                uploadFileBtn: "WGRAJ PLIK",
+                snapBtn: "ZAPISZ KADR",
+                cancelCamBtn: "ANULUJ",
+                contextLabel: "KONTEKST / LOKALIZACJA (OPCJONALNIE)",
+                contextPlaceholder: "NP. PIWNICA MDS, KORYTARZ SZKOLNY...",
+                runAuditBtn: "URUCHOM AUDYT BEZPIECZEŃSTWA I OC",
+                demoTitle: "SCENARIUSZE TESTOWE:",
+                demoExit: "ZASTAWIONE WYJŚCIE",
+                demoBasement: "PIWNICA MDS",
+                demoFlood: "ZALANA ROZDZIELNIA",
+                standbyTitle: "OCZEKIWANIE NA ZDJĘCIE DO AUDYTU",
+                standbyDesc: "ZRÓB LUB WGRAJ ZDJĘCIE, ABY OCENIĆ ZAGROŻENIA WG MECHANIZMU OCHRONY LUDNOŚCI UE ORAZ WYTYCZNYCH PSP / RCB / MSWIA.",
+                execSummaryTitle: "PODSUMOWANIE OCENY",
+                copyBtn: "KOPIUJ",
+                exportBtn: "ZAPISZ .TXT",
+                aiDisclaimer: "ZWERYFIKUJ Z LOKALNĄ PSP / SŁUŻBAMI",
+                hazardsSectionTitle: "WYKRYTE ZAGROŻENIA I NARUSZENIA",
+                scenariosSectionTitle: "SCENARIUSZ ZAGROŻEŃ (3 PRAWDOPODOBNE WARIANTY)",
+                fixesSectionTitle: "NAPRAWY / FIXES (KLUCZOWE SZYBKIE ROZWIĄZANIA)",
+                actionsSectionTitle: "DZIAŁANIA OBRONY CYWILNEJ I NAPRAWCZE",
+                protocolsSectionTitle: "DYREKTYWY UE I PROTOKOŁY PAŃSTWOWE RP",
+                verifiedLinksTitle: "ZWERYFIKOWANE ŹRÓDŁA OFICJALNE:",
+                chkMainTitle: "LISTA KONTROLNA GOTOWOŚCI OBRONY CYWILNEJ (OFFLINE)",
+                chkMainSub: "OPARTA NA WYTYCZNYCH RCB (PLECAK EWAKUACYJNY 72H) ORAZ KG PSP (MDS)",
+                chkResetBtn: "RESETUJ",
+                footerDisclaimer: "W SYTUACJI ZAGROŻENIA ŻYCIA DZWOŃ POD 112 LUB 998.",
+                modalTitle: "SYGNAŁY ALARMOWE OC I NUMERY ALARMOWE RP",
+                num112: "ALARM UE",
+                num998: "STRAŻ (PSP)",
+                num997: "POLICJA",
+                num999: "POGOTOWIE",
+                sirenAnnounce: "OGŁOSZENIE ALARMU (SYGNAŁ AKUSTYCZNY)",
+                sirenAnnounceDesc: "MODULOWANY DŹWIĘK SYRENY PRZEZ 3 MINUTY. SPRAWDŹ ALERT RCB SMS, WŁĄCZ RADIO/TV, ZAMKNIJ OKNA, UDAJ SIĘ DO SCHRONU (MDS), POMÓŻ SĄSIADOM.",
+                sirenCancel: "ODWOŁANIE ALARMU",
+                sirenCancelDesc: "CIĄGŁY JEDNOSTAJNY DŹWIĘK SYRENY PRZEZ 3 MINUTY. STOSUJ SIĘ DO KOMUNIKATÓW WŁADZ LOKALNYCH I PSP.",
+                toastCopied: "RAPORT SKOPIOWANO DO SCHOWKA.",
+                toastError: "BŁĄD ANALIZY. SPRAWDŹ POŁĄCZENIE.",
+                toastCamError: "BRAK KAMERY; OTWIERANIE WYBORU PLIKU."
+            }
+        };
+
+        // =========================================================================
+        // 2. VIEW SWITCHING, LANGUAGE & CHECKLIST ENGINE
+        // =========================================================================
+        function switchView(viewName) {
+            state.view = viewName;
+            const scannerEl = document.getElementById('view-scanner');
+            const checklistEl = document.getElementById('view-checklist');
+            const navScanner = document.getElementById('nav-scanner');
+            const navChecklist = document.getElementById('nav-checklist');
+
+            if (viewName === 'scanner') {
+                scannerEl.classList.remove('hidden');
+                checklistEl.classList.add('hidden');
+                navScanner.className = "px-2.5 py-1 rounded border border-yellow-400 bg-yellow-400 text-black text-xs font-extrabold transition";
+                navChecklist.className = "px-2.5 py-1 rounded border border-yellow-400 bg-black text-yellow-400 hover:bg-yellow-400/10 text-xs font-extrabold transition";
+            } else {
+                scannerEl.classList.add('hidden');
+                checklistEl.classList.remove('hidden');
+                navChecklist.className = "px-2.5 py-1 rounded border border-yellow-400 bg-yellow-400 text-black text-xs font-extrabold transition";
+                navScanner.className = "px-2.5 py-1 rounded border border-yellow-400 bg-black text-yellow-400 hover:bg-yellow-400/10 text-xs font-extrabold transition";
+                renderChecklist();
+            }
+        }
+
+        function setLanguage(lang) {
+            state.lang = lang;
+            document.documentElement.lang = lang;
+
+            const btnEn = document.getElementById('lang-en');
+            const btnPl = document.getElementById('lang-pl');
+            if (lang === 'en') {
+                btnEn.className = "px-2 py-1 text-xs font-extrabold bg-yellow-400 text-black";
+                btnPl.className = "px-2 py-1 text-xs font-extrabold bg-black text-yellow-400";
+            } else {
+                btnPl.className = "px-2 py-1 text-xs font-extrabold bg-yellow-400 text-black";
+                btnEn.className = "px-2 py-1 text-xs font-extrabold bg-black text-yellow-400";
+            }
+
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (i18n[lang][key]) el.textContent = i18n[lang][key];
+            });
+
+            document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+                const key = el.getAttribute('data-i18n-placeholder');
+                if (i18n[lang][key]) el.placeholder = i18n[lang][key];
+            });
+
+            renderChecklist();
+
+            if (state.lastReport && state.imageBase64) {
+                runSafetyAudit();
+            }
+        }
+
+        function renderChecklist() {
+            const grid = document.getElementById('checklist-grid');
+            if (!grid) return;
+            grid.innerHTML = '';
+
+            let totalItems = 0;
+            let checkedCount = 0;
+
+            checklistData.forEach(cat => {
+                const box = document.createElement('div');
+                box.className = 'border border-yellow-400 rounded p-3 bg-black flex flex-col gap-2';
+                
+                const title = document.createElement('h3');
+                title.className = 'text-xs font-extrabold border-b border-yellow-400/50 pb-1.5';
+                title.textContent = state.lang === 'pl' ? cat.titlePl : cat.titleEn;
+                box.appendChild(title);
+
+                cat.items.forEach(item => {
+                    totalItems++;
+                    const isChecked = !!state.checkedItems[item.id];
+                    if (isChecked) checkedCount++;
+
+                    const row = document.createElement('button');
+                    row.type = 'button';
+                    row.onclick = () => toggleChecklistItem(item.id);
+                    row.className = `text-left p-2 rounded border border-yellow-400 flex items-start gap-2.5 transition ${isChecked ? 'bg-yellow-400 text-black font-extrabold' : 'bg-black text-yellow-400 hover:bg-yellow-400/10'}`;
+                    
+                    row.innerHTML = `
+                        <span class="mt-0.5 w-4 h-4 shrink-0 border ${isChecked ? 'border-black bg-black text-yellow-400' : 'border-yellow-400'} flex items-center justify-center text-[10px]">
+                            ${isChecked ? '✓' : ''}
+                        </span>
+                        <span class="text-[11px] leading-snug">${state.lang === 'pl' ? item.pl : item.en}</span>
+                    `;
+                    box.appendChild(row);
+                });
+
+                grid.appendChild(box);
+            });
+
+            const pct = totalItems > 0 ? Math.round((checkedCount / totalItems) * 100) : 0;
+            document.getElementById('chk-progress-bar').style.width = `${pct}%`;
+            document.getElementById('chk-progress-text').textContent = state.lang === 'pl' ? `${pct}% GOTOWOŚCI` : `${pct}% READY`;
+        }
+
+        function toggleChecklistItem(id) {
+            state.checkedItems[id] = !state.checkedItems[id];
+            localStorage.setItem('scan4safety_checklist', JSON.stringify(state.checkedItems));
+            renderChecklist();
+        }
+
+        function resetChecklist() {
+            state.checkedItems = {};
+            localStorage.removeItem('scan4safety_checklist');
+            renderChecklist();
+        }
+
+        function selectProtocol(protocolId) {
+            state.protocol = protocolId;
+            document.querySelectorAll('.protocol-btn').forEach(btn => {
+                const isSelected = btn.getAttribute('data-protocol') === protocolId;
+                if (isSelected) {
+                    btn.className = "protocol-btn active text-left p-2.5 rounded border-2 border-yellow-400 bg-yellow-400 text-black transition flex flex-col gap-0.5";
+                } else {
+                    btn.className = "protocol-btn text-left p-2.5 rounded border border-yellow-400 bg-black text-yellow-400 hover:bg-yellow-400/10 transition flex flex-col gap-0.5";
+                }
+            });
+        }
+
+        function toggleEmergencyModal() {
+            document.getElementById('emergency-modal').classList.toggle('hidden');
+        }
+
+        function showToast(message) {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = 'bg-black border-2 border-yellow-400 text-yellow-400 px-3 py-2 rounded text-[11px] font-extrabold flex items-center gap-2 pointer-events-auto';
+            toast.innerHTML = `<i class="fa-solid fa-circle-info"></i><span>${message}</span>`;
+            container.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        // =========================================================================
+        // 3. IMAGE CAPTURE, UPLOAD & SYNTHETIC SCENARIOS
+        // =========================================================================
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            stopWebcam();
+            const reader = new FileReader();
+            reader.onload = (e) => setLoadedImage(e.target.result, file.type || 'image/jpeg');
+            reader.readAsDataURL(file);
+        }
+
+        function setLoadedImage(dataUrl, mimeType) {
+            state.imageBase64 = dataUrl.split(',')[1];
+            state.imageMimeType = mimeType;
+
+            const preview = document.getElementById('image-preview');
+            preview.src = dataUrl;
+            preview.classList.remove('hidden');
+
+            document.getElementById('upload-placeholder').classList.add('hidden');
+            document.getElementById('camera-stream').classList.add('hidden');
+            document.getElementById('clear-image-btn').classList.remove('hidden');
+            document.getElementById('analyze-btn').disabled = false;
+        }
+
+        function resetImage() {
+            stopWebcam();
+            state.imageBase64 = null;
+            document.getElementById('image-preview').classList.add('hidden');
+            document.getElementById('image-preview').src = '';
+            document.getElementById('upload-placeholder').classList.remove('hidden');
+            document.getElementById('clear-image-btn').classList.add('hidden');
+            document.getElementById('analyze-btn').disabled = true;
+            document.getElementById('file-input').value = '';
+            document.getElementById('camera-input').value = '';
+        }
+
+        async function triggerCamera() {
+            const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+            if (isMobile) {
+                document.getElementById('camera-input').click();
+                return;
+            }
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+                state.webcamStream = stream;
+                const video = document.getElementById('camera-stream');
+                video.srcObject = stream;
+                video.classList.remove('hidden');
+                
+                document.getElementById('upload-placeholder').classList.add('hidden');
+                document.getElementById('image-preview').classList.add('hidden');
+                document.getElementById('capture-controls').classList.add('hidden');
+                document.getElementById('webcam-controls').classList.remove('hidden');
+            } catch (err) {
+                showToast(i18n[state.lang].toastCamError);
+                document.getElementById('camera-input').click();
+            }
+        }
+
+        function snapWebcamPhoto() {
+            const video = document.getElementById('camera-stream');
+            const canvas = document.getElementById('helper-canvas');
+            canvas.width = video.videoWidth || 640;
+            canvas.height = video.videoHeight || 480;
+            canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+            stopWebcam();
+            setLoadedImage(dataUrl, 'image/jpeg');
+        }
+
+        function stopWebcam() {
+            if (state.webcamStream) {
+                state.webcamStream.getTracks().forEach(track => track.stop());
+                state.webcamStream = null;
+            }
+            document.getElementById('camera-stream').classList.add('hidden');
+            document.getElementById('webcam-controls').classList.add('hidden');
+            document.getElementById('capture-controls').classList.remove('hidden');
+            if (!state.imageBase64) {
+                document.getElementById('upload-placeholder').classList.remove('hidden');
+            }
+        }
+
+        const dropzone = document.getElementById('dropzone');
+        dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.classList.add('bg-yellow-400/10'); });
+        dropzone.addEventListener('dragleave', () => { dropzone.classList.remove('bg-yellow-400/10'); });
+        dropzone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropzone.classList.remove('bg-yellow-400/10');
+            if (e.dataTransfer.files && e.dataTransfer.files[0] && e.dataTransfer.files[0].type.startsWith('image/')) {
+                const file = e.dataTransfer.files[0];
+                const reader = new FileReader();
+                reader.onload = (ev) => setLoadedImage(ev.target.result, file.type);
+                reader.readAsDataURL(file);
+            }
+        });
+
+        function loadSyntheticScenario(type) {
+            stopWebcam();
+            const canvas = document.getElementById('helper-canvas');
+            canvas.width = 640;
+            canvas.height = 480;
+            const ctx = canvas.getContext('2d');
+
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(0, 0, 640, 480);
+            ctx.strokeStyle = '#facc15';
+            ctx.fillStyle = '#facc15';
+            ctx.lineWidth = 3;
+
+            if (type === 'blocked_exit') {
+                selectProtocol('fire_evac');
+                ctx.strokeRect(220, 40, 200, 45);
+                ctx.font = 'bold 20px monospace';
+                ctx.fillText('WYJŚCIE / EXIT', 240, 70);
+                ctx.strokeRect(200, 100, 240, 320);
+                ctx.strokeRect(170, 270, 140, 150);
+                ctx.strokeRect(320, 250, 140, 170);
+                ctx.font = 'bold 14px monospace';
+                ctx.fillText('OBSTACLES / KARTONY BLOCKING EXIT', 175, 450);
+                document.getElementById('context-notes').value = state.lang === 'pl' 
+                    ? 'ZASTAWIONE WYJŚCIE EWAKUACYJNE KARTONAMI' 
+                    : 'BLOCKED EMERGENCY EXIT CORRIDOR';
+            } else if (type === 'shelter_basement') {
+                selectProtocol('civil_defense');
+                ctx.strokeRect(60, 60, 520, 360);
+                ctx.beginPath(); ctx.moveTo(120, 60); ctx.lineTo(150, 200); ctx.lineTo(110, 340); ctx.stroke();
+                ctx.strokeRect(380, 90, 160, 80);
+                ctx.font = 'bold 14px monospace';
+                ctx.fillText('UNSEALED WINDOW', 390, 135);
+                ctx.fillText('GAS PIPE OVERHEAD / WALL CRACK', 90, 450);
+                document.getElementById('context-notes').value = state.lang === 'pl'
+                    ? 'PIWNICA MDS Z RURĄ GAZOWĄ I NIEZABEZPIECZONYM OKNEM'
+                    : 'BASEMENT MDS WITH OVERHEAD GAS PIPE AND UNSEALED WINDOW';
+            } else if (type === 'electrical_flood') {
+                selectProtocol('public_infra');
+                ctx.strokeRect(210, 80, 220, 240);
+                ctx.font = 'bold 18px monospace';
+                ctx.fillText('400V OPEN PANEL', 235, 205);
+                ctx.beginPath(); ctx.moveTo(40, 360); ctx.lineTo(600, 360); ctx.stroke();
+                ctx.fillText('STANDING WATER ON FLOOR / ZALANIE', 160, 410);
+                document.getElementById('context-notes').value = state.lang === 'pl'
+                    ? 'ZALANA ROZDZIELNIA ELEKTRYCZNA W PIWNICY'
+                    : 'FLOODED ELECTRICAL PANEL IN BASEMENT';
+            }
+
+            setLoadedImage(canvas.toDataURL('image/jpeg', 0.9), 'image/jpeg');
+        }
+
+        // =========================================================================
+        // 4. GEMINI API INTEGRATION (MULTIMODAL VISION + SEARCH GROUNDING + JSON)
+        // =========================================================================
+        async function fetchWithRetry(url, options, maxRetries = 4) {
+            let delay = 1000;
+            for (let attempt = 0; attempt <= maxRetries; attempt++) {
+                try {
+                    const response = await fetch(url, options);
+                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                    return await response.json();
+                } catch (err) {
+                    if (attempt === maxRetries) throw err;
+                    await new Promise(res => setTimeout(res, delay));
+                    delay *= 2;
+                }
+            }
+        }
+
+        async function runSafetyAudit() {
+            if (!state.imageBase64) return;
+
+            const analyzeBtn = document.getElementById('analyze-btn');
+            const scanOverlay = document.getElementById('scan-overlay');
+            analyzeBtn.disabled = true;
+            scanOverlay.classList.remove('hidden');
+
+            const userNotes = document.getElementById('context-notes').value.trim();
+            const targetLanguage = state.lang === 'pl' ? 'POLISH (JĘZYK POLSKI)' : 'ENGLISH';
+
+            const protocolDescriptions = {
+                civil_defense: 'EU Civil Protection Mechanism (Decision 1313/2013/EU), Polish Civil Protection & Civil Defense Act (Ustawa o ochronie ludności i obronie cywilnej), MSWiA/PSP Guidelines on Shelters and Places of Temporary Refuge (Miejsca Doraźnego Schronienia - MDS), and RCB (Rządowe Centrum Bezpieczeństwa) preparedness handbooks.',
+                fire_evac: 'Polish Fire Protection Act (Ustawa o ochronie przeciwpożarowej), MSWiA Regulation on Fire Protection of Buildings (Dz.U. 2010 nr 109 poz. 719), Państwowa Straż Pożarna (PSP) evacuation route clearance, fire extinguisher, hydrant, and smoke ventilation standards, plus EU fire safety directives.',
+                public_infra: 'EU Critical Entities Resilience Directive (CER - Directive (EU) 2022/2557), Polish Crisis Management Act (Ustawa o zarządzaniu kryzysowym), RCB public safety alerts, municipal flood/storm/electrical hazard protocols, and community infrastructure safety.',
+                cbrn_hazmat: 'EU CBRN Action Plan, Polish Environmental Protection & GIOŚ (Główny Inspektorat Ochrony Środowiska) standards, PSP Chemical & Ecological Rescue (Ratownictwo Chemiczno-Ekologiczne) protocols, ADR/CLP hazardous materials labeling, and RCB contamination procedures.'
+            };
+
+            const systemPrompt = `You are a senior European Union Civil Protection Officer and Polish State Fire Service (Państwowa Straż Pożarna - PSP) & Government Security Center (RCB) Safety Inspector.
+Analyze the provided photograph for physical, structural, fire, environmental, CBRN, or civil defense hazards affecting civilians and local communities.
+1. Respond ENTIRELY in ${targetLanguage}.
+2. Focus through: ${protocolDescriptions[state.protocol]}.
+3. Cite authentic Polish state publications/laws (KG PSP, Wytyczne MDS, Rozporządzenie MSWiA, Poradniki RCB, Ustawa o ochronie ludności i obronie cywilnej) AND EU Civil Protection protocols.
+4. Generate EXACTLY 3 probable hazard escalation scenarios (hazardScenarios) based on the detected risks (e.g. Variant 1: Most Likely, Variant 2: Rapid Escalation / Panic, Variant 3: Worst-Case Compound Failure).
+5. Generate quick, essential, practical fixes (quickFixes) directly resolving the single most dangerous threats detected in the photo.
+6. Output STRICTLY valid JSON matching the schema.`;
+
+            const userQuery = `Inspect this image for safety hazards and civil defense readiness. Framework: ${state.protocol}. ${userNotes ? `Context: "${userNotes}"` : ''}`;
+
+            const apiKey = "";
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+
+            const payload = {
+                contents: [{
+                    role: "user",
+                    parts: [
+                        { text: userQuery },
+                        { inlineData: { mimeType: state.imageMimeType, data: state.imageBase64 } }
+                    ]
+                }],
+                systemInstruction: { parts: [{ text: systemPrompt }] },
+                tools: [{ "google_search": {} }],
+                generationConfig: {
+                    responseMimeType: "application/json",
+                    responseSchema: {
+                        type: "OBJECT",
+                        properties: {
+                            reportTitle: { type: "STRING" },
+                            riskLevel: { type: "STRING", enum: ["CRITICAL", "HIGH", "MODERATE", "LOW"] },
+                            riskLabelLocalized: { type: "STRING" },
+                            executiveSummary: { type: "STRING" },
+                            detectedHazards: {
+                                type: "ARRAY",
+                                items: {
+                                    type: "OBJECT",
+                                    properties: {
+                                        hazardName: { type: "STRING" },
+                                        severity: { type: "STRING", enum: ["CRITICAL", "HIGH", "MODERATE", "LOW"] },
+                                        observation: { type: "STRING" },
+                                        threatImpact: { type: "STRING" }
+                                    },
+                                    required: ["hazardName", "severity", "observation", "threatImpact"]
+                                }
+                            },
+                            hazardScenarios: {
+                                type: "ARRAY",
+                                items: {
+                                    type: "OBJECT",
+                                    properties: {
+                                        variantLabel: { type: "STRING" },
+                                        probability: { type: "STRING" },
+                                        scenarioTitle: { type: "STRING" },
+                                        chainOfEvents: { type: "STRING" }
+                                    },
+                                    required: ["variantLabel", "probability", "scenarioTitle", "chainOfEvents"]
+                                }
+                            },
+                            quickFixes: {
+                                type: "ARRAY",
+                                items: {
+                                    type: "OBJECT",
+                                    properties: {
+                                        targetThreat: { type: "STRING" },
+                                        fixHeadline: { type: "STRING" },
+                                        quickExecution: { type: "STRING" }
+                                    },
+                                    required: ["targetThreat", "fixHeadline", "quickExecution"]
+                                }
+                            },
+                            mitigationActions: {
+                                type: "ARRAY",
+                                items: {
+                                    type: "OBJECT",
+                                    properties: {
+                                        priority: { type: "STRING" },
+                                        actionTitle: { type: "STRING" },
+                                        actionSteps: { type: "STRING" }
+                                    },
+                                    required: ["priority", "actionTitle", "actionSteps"]
+                                }
+                            },
+                            regulatoryReferences: {
+                                type: "ARRAY",
+                                items: {
+                                    type: "OBJECT",
+                                    properties: {
+                                        authority: { type: "STRING" },
+                                        documentTitle: { type: "STRING" },
+                                        relevance: { type: "STRING" }
+                                    },
+                                    required: ["authority", "documentTitle", "relevance"]
+                                }
+                            }
+                        },
+                        required: ["reportTitle", "riskLevel", "riskLabelLocalized", "executiveSummary", "detectedHazards", "hazardScenarios", "quickFixes", "mitigationActions", "regulatoryReferences"]
+                    }
+                }
+            };
+
+            try {
+                const result = await fetchWithRetry(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const candidate = result.candidates?.[0];
+                const rawJsonText = candidate?.content?.parts?.[0]?.text;
+                if (!rawJsonText) throw new Error("Empty response");
+
+                const parsedReport = JSON.parse(rawJsonText);
+                let sources = [];
+                if (candidate.groundingMetadata?.groundingAttributions) {
+                    sources = candidate.groundingMetadata.groundingAttributions
+                        .map(attr => ({ uri: attr.web?.uri, title: attr.web?.title }))
+                        .filter(s => s.uri && s.title);
+                }
+
+                state.lastReport = { ...parsedReport, sources };
+                renderReport(state.lastReport);
+            } catch (error) {
+                console.error("Audit Error:", error);
+                showToast(i18n[state.lang].toastError);
+            } finally {
+                scanOverlay.classList.add('hidden');
+                analyzeBtn.disabled = false;
+            }
+        }
+
+        // =========================================================================
+        // 5. RENDERING REPORT & EXPORT
+        // =========================================================================
+        function renderReport(report) {
+            document.getElementById('report-standby').classList.add('hidden');
+            const container = document.getElementById('report-container');
+            container.classList.remove('hidden');
+
+            document.getElementById('report-timestamp').textContent = new Date().toLocaleString(state.lang === 'pl' ? 'pl-PL' : 'en-GB');
+            document.getElementById('report-protocol-badge').textContent = state.protocol.replace('_', ' ');
+            document.getElementById('report-title').textContent = report.reportTitle;
+            document.getElementById('report-summary').textContent = report.executiveSummary;
+
+            const riskBadge = document.getElementById('risk-badge');
+            document.getElementById('risk-label').textContent = report.riskLabelLocalized || report.riskLevel;
+            if (report.riskLevel === 'CRITICAL' || report.riskLevel === 'HIGH') {
+                riskBadge.className = 'px-3 py-1.5 rounded border-2 border-yellow-400 bg-yellow-400 text-black text-xs font-extrabold tracking-wider flex items-center gap-1.5';
+            } else {
+                riskBadge.className = 'px-3 py-1.5 rounded border-2 border-yellow-400 bg-black text-yellow-400 text-xs font-extrabold tracking-wider flex items-center gap-1.5';
+            }
+
+            // Hazards
+            const hazardsList = document.getElementById('hazards-list');
+            hazardsList.innerHTML = '';
+            (report.detectedHazards || []).forEach((h, idx) => {
+                const isSevere = h.severity === 'CRITICAL' || h.severity === 'HIGH';
+                const card = document.createElement('div');
+                card.className = 'p-3 rounded border border-yellow-400 bg-black';
+                card.innerHTML = `
+                    <div class="flex items-start justify-between gap-2 mb-1">
+                        <h4 class="text-xs font-extrabold">${idx + 1}. ${escapeHtml(h.hazardName)}</h4>
+                        <span class="px-1.5 py-0.5 rounded text-[10px] font-extrabold border border-yellow-400 ${isSevere ? 'bg-yellow-400 text-black' : 'bg-black text-yellow-400'}">${escapeHtml(h.severity)}</span>
+                    </div>
+                    <p class="text-[11px] mb-1"><strong>${state.lang === 'pl' ? 'OBSERWACJA:' : 'OBSERVATION:'}</strong> ${escapeHtml(h.observation)}</p>
+                    <p class="text-[11px] opacity-85"><strong>${state.lang === 'pl' ? 'SKUTEK:' : 'IMPACT:'}</strong> ${escapeHtml(h.threatImpact)}</p>
+                `;
+                hazardsList.appendChild(card);
+            });
+
+            // Hazard Scenarios (3 Variants)
+            const scenariosList = document.getElementById('scenarios-list');
+            scenariosList.innerHTML = '';
+            (report.hazardScenarios || []).slice(0, 3).forEach((sc, idx) => {
+                const box = document.createElement('div');
+                box.className = 'p-3 rounded border border-yellow-400 bg-black flex flex-col justify-between gap-1.5';
+                box.innerHTML = `
+                    <div>
+                        <div class="flex items-center justify-between gap-1 mb-1">
+                            <span class="text-[10px] font-extrabold border border-yellow-400 px-1.5 py-0.5 rounded">${escapeHtml(sc.variantLabel || `VARIANT 0${idx + 1}`)}</span>
+                            <span class="text-[10px] font-bold opacity-80">${escapeHtml(sc.probability)}</span>
+                        </div>
+                        <h4 class="text-xs font-extrabold mb-1">${escapeHtml(sc.scenarioTitle)}</h4>
+                        <p class="text-[11px] opacity-90 leading-snug">${escapeHtml(sc.chainOfEvents)}</p>
+                    </div>
+                `;
+                scenariosList.appendChild(box);
+            });
+
+            // Quick Fixes (Essential Solutions)
+            const fixesList = document.getElementById('fixes-list');
+            fixesList.innerHTML = '';
+            (report.quickFixes || []).forEach((fix, idx) => {
+                const row = document.createElement('div');
+                row.className = 'p-2.5 rounded border border-yellow-400 bg-black flex items-start gap-2.5';
+                row.innerHTML = `
+                    <span class="px-2 py-0.5 rounded bg-yellow-400 text-black text-[10px] font-extrabold shrink-0">FIX #${idx + 1}</span>
+                    <div class="flex-1">
+                        <div class="text-[10px] font-bold opacity-75 mb-0.5">${state.lang === 'pl' ? 'CEL:' : 'TARGET:'} ${escapeHtml(fix.targetThreat)}</div>
+                        <h4 class="text-xs font-extrabold mb-0.5">${escapeHtml(fix.fixHeadline)}</h4>
+                        <p class="text-[11px] opacity-95 leading-snug">${escapeHtml(fix.quickExecution)}</p>
+                    </div>
+                `;
+                fixesList.appendChild(row);
+            });
+
+            // Actions
+            const actionsList = document.getElementById('actions-list');
+            actionsList.innerHTML = '';
+            (report.mitigationActions || []).forEach((act) => {
+                const item = document.createElement('div');
+                item.className = 'p-2.5 rounded border border-yellow-400 bg-black flex items-start gap-2.5';
+                item.innerHTML = `
+                    <span class="px-1.5 py-0.5 rounded border border-yellow-400 text-[10px] font-extrabold shrink-0">${escapeHtml(act.priority)}</span>
+                    <div class="flex-1">
+                        <h4 class="text-xs font-extrabold mb-0.5">${escapeHtml(act.actionTitle)}</h4>
+                        <p class="text-[11px] opacity-90 leading-snug">${escapeHtml(act.actionSteps)}</p>
+                    </div>
+                `;
+                actionsList.appendChild(item);
+            });
+
+            // Protocols
+            const protocolsList = document.getElementById('protocols-list');
+            protocolsList.innerHTML = '';
+            (report.regulatoryReferences || []).forEach((ref) => {
+                const box = document.createElement('div');
+                box.className = 'p-2.5 rounded border border-yellow-400 bg-black';
+                box.innerHTML = `
+                    <span class="inline-block text-[10px] font-extrabold underline mb-0.5">${escapeHtml(ref.authority)}</span>
+                    <h4 class="text-xs font-extrabold mb-0.5">${escapeHtml(ref.documentTitle)}</h4>
+                    <p class="text-[10px] opacity-85 leading-snug">${escapeHtml(ref.relevance)}</p>
+                `;
+                protocolsList.appendChild(box);
+            });
+
+            // Grounding Sources
+            const sourcesWrapper = document.getElementById('grounding-sources-wrapper');
+            const sourcesList = document.getElementById('grounding-sources-list');
+            sourcesList.innerHTML = '';
+            if (report.sources && report.sources.length > 0) {
+                sourcesWrapper.classList.remove('hidden');
+                const uniqueSources = Array.from(new Map(report.sources.map(s => [s.uri, s])).values()).slice(0, 6);
+                uniqueSources.forEach(src => {
+                    const a = document.createElement('a');
+                    a.href = src.uri;
+                    a.target = '_blank';
+                    a.rel = 'noopener noreferrer';
+                    a.className = 'text-[10px] font-bold px-2 py-1 rounded border border-yellow-400 hover:bg-yellow-400 hover:text-black transition truncate max-w-xs';
+                    a.textContent = `[↗] ${src.title}`;
+                    sourcesList.appendChild(a);
+                });
+            } else {
+                sourcesWrapper.classList.add('hidden');
+            }
+
+            if (window.innerWidth < 1024) {
+                container.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }
+
+        function formatReportAsPlainText() {
+            if (!state.lastReport) return '';
+            const r = state.lastReport;
+            let lines = [
+                `============================================================`,
+                `SCAN4SAFETY PL/EU — CIVIL DEFENSE & HAZARD AUDIT REPORT`,
+                `============================================================`,
+                `TITLE: ${r.reportTitle}`,
+                `RISK LEVEL: ${r.riskLabelLocalized} (${r.riskLevel})`,
+                `FRAMEWORK: ${state.protocol.toUpperCase()}`,
+                `DATE: ${new Date().toLocaleString()}`,
+                ``,
+                `--- EXECUTIVE SUMMARY ---`,
+                r.executiveSummary,
+                ``,
+                `--- DETECTED HAZARDS & VIOLATIONS ---`
+            ];
+            (r.detectedHazards || []).forEach((h, i) => {
+                lines.push(`${i + 1}. [${h.severity}] ${h.hazardName}`);
+                lines.push(`   OBSERVATION: ${h.observation}`);
+                lines.push(`   IMPACT: ${h.threatImpact}`);
+            });
+            lines.push(``, `--- HAZARD SCENARIO (3 PROBABLE VARIANTS) ---`);
+            (r.hazardScenarios || []).forEach((sc, i) => {
+                lines.push(`${i + 1}. [${sc.variantLabel} | ${sc.probability}] ${sc.scenarioTitle}: ${sc.chainOfEvents}`);
+            });
+            lines.push(``, `--- FIXES (ESSENTIAL RAPID SOLUTIONS) ---`);
+            (r.quickFixes || []).forEach((fx, i) => {
+                lines.push(`FIX #${i + 1} [TARGET: ${fx.targetThreat}] ${fx.fixHeadline}: ${fx.quickExecution}`);
+            });
+            lines.push(``, `--- CIVIL DEFENSE & MITIGATION ACTIONS ---`);
+            (r.mitigationActions || []).forEach((a, i) => {
+                lines.push(`${i + 1}. [${a.priority}] ${a.actionTitle}: ${a.actionSteps}`);
+            });
+            lines.push(``, `--- EU DIRECTIVES & POLISH STATE PROTOCOLS ---`);
+            (r.regulatoryReferences || []).forEach((ref) => {
+                lines.push(`- ${ref.authority} | ${ref.documentTitle}: ${ref.relevance}`);
+            });
+            lines.push(``, `EMERGENCY CONTACTS (PL/EU): 112 | 998 (PSP) | 997 (POLICE) | 999 (MEDICAL)`);
+            return lines.join('\n').toUpperCase();
+        }
+
+        function copyReportToClipboard() {
+            const text = formatReportAsPlainText();
+            if (!text) return;
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.position = 'fixed';
+            textarea.style.opacity = '0';
+            document.body.appendChild(textarea);
+            textarea.select();
+            try {
+                document.execCommand('copy');
+                showToast(i18n[state.lang].toastCopied);
+            } catch (err) {
+                showToast('COPY FAILED');
+            }
+            document.body.removeChild(textarea);
+        }
+
+        function downloadReportMarkdown() {
+            const text = formatReportAsPlainText();
+            if (!text) return;
+            const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `SCAN4SAFETY_${state.lang.toUpperCase()}_${new Date().toISOString().slice(0,10)}.TXT`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        // Initialize offline checklist on load
+        renderChecklist();
+
+        // =========================================================================
+        // 6. ANDROID PWA MANIFEST, SERVICE WORKER & INSTALL PROMPT
+        // =========================================================================
+        let deferredInstallPrompt = null;
+
+        function initAndroidPWA() {
+            // Generate crisp black & yellow shield SVG icon for Android launcher
+            const svgIcon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" fill="#000000"/><rect x="16" y="16" width="480" height="480" rx="64" fill="none" stroke="#facc15" stroke-width="24"/><path d="M256 96L128 152v104c0 88.4 54.6 170.8 128 196 73.4-25.2 128-107.6 128-196V152L256 96z" fill="none" stroke="#facc15" stroke-width="28"/><text x="256" y="295" font-family="monospace" font-weight="bold" font-size="96" fill="#facc15" text-anchor="middle">S4S</text></svg>`;
+            const iconUrl = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgIcon);
+
+            const manifest = {
+                name: "SCAN4SAFETY PL/EU",
+                short_name: "SCAN4SAFETY",
+                description: "EU & POLISH CIVIL DEFENSE & HAZARD SCANNER",
+                start_url: window.location.href,
+                display: "standalone",
+                orientation: "portrait",
+                background_color: "#000000",
+                theme_color: "#000000",
+                icons: [
+                    { src: iconUrl, sizes: "192x192", type: "image/svg+xml", purpose: "any maskable" },
+                    { src: iconUrl, sizes: "512x512", type: "image/svg+xml", purpose: "any maskable" }
+                ]
+            };
+
+            const manifestBlob = new Blob([JSON.stringify(manifest)], { type: 'application/manifest+json' });
+            const manifestUrl = URL.createObjectURL(manifestBlob);
+            const linkEl = document.getElementById('pwa-manifest-link');
+            if (linkEl) linkEl.setAttribute('href', manifestUrl);
+
+            // Register lightweight inline Service Worker for Android PWA installability
+            if ('serviceWorker' in navigator && (window.location.protocol === 'https:' || window.location.hostname === 'localhost')) {
+                const swCode = `
+                    const CACHE_NAME = 'scan4safety-v1';
+                    self.addEventListener('install', (e) => self.skipWaiting());
+                    self.addEventListener('activate', (e) => e.waitUntil(clients.claim()));
+                    self.addEventListener('fetch', (e) => {
+                        if (e.request.method !== 'GET') return;
+                        e.respondWith(
+                            fetch(e.request).then((res) => {
+                                const copy = res.clone();
+                                caches.open(CACHE_NAME).then((cache) => cache.put(e.request, copy));
+                                return res;
+                            }).catch(() => caches.match(e.request))
+                        );
+                    });
+                `;
+                const swBlob = new Blob([swCode], { type: 'application/javascript' });
+                navigator.serviceWorker.register(URL.createObjectURL(swBlob)).catch(() => {});
+            }
+        }
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredInstallPrompt = e;
+        });
+
+        async function installAndroidPWA() {
+            if (deferredInstallPrompt) {
+                deferredInstallPrompt.prompt();
+                const { outcome } = await deferredInstallPrompt.userChoice;
+                if (outcome === 'accepted') {
+                    deferredInstallPrompt = null;
+                }
+            } else {
+                toggleInstallModal();
+            }
+        }
+
+        function toggleInstallModal() {
+            document.getElementById('install-modal').classList.toggle('hidden');
+        }
+
+        function downloadHtmlFile() {
+            const htmlContent = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+            const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'index.html';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        initAndroidPWA();
+    </script>
+</body>
+</html>
